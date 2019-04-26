@@ -4,13 +4,11 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 2019-04-26 10:08:27.011782
+%%% Created : 2019-04-26 19:37:46.202266
 %%%-------------------------------------------------------------------
--module(reception).
+-module(receptionist).
 
 -behaviour(gen_server).
-
--include("server.hrl").
 
 %% API
 -export([start_link/0]).
@@ -25,7 +23,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {listener}).
+-record(state, {}).
 
 %%%===================================================================
 %%% API
@@ -39,8 +37,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link() ->
-    Port = get_server_port(),
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -57,22 +54,8 @@ start_link() ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Port]) ->
-    case gen_tcp:listen(Port, ?SOCK_OPTIONS) of
-        {ok, ListenSocket} ->            
-            {ok, accept(#state{listener = ListenSocket})};
-        {error, Reason} ->
-            {stop, Reason}
-    end.
-
-accept(#state{listener = ListenSocket} = State) ->
-    proc_lib:spawn(fun() -> accept_loop(ListenSocket) end),
-    State.
-
-accept_loop(ListenSocket) ->
-    {ok, Socket} = gen_tcp:accept(ListenSocket),
-    gen_server:cast(?SERVER, accepted),
-    receptionist_sup:add_receptionist(Socket).
+init([]) ->
+    {ok, #state{}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -102,8 +85,6 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast(accepted, State) ->
-    {noreply, accept(State)};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -148,5 +129,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-get_server_port() -> ?DEFAULT_PORT.
+
+
+
 

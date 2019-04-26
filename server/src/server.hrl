@@ -12,10 +12,16 @@
 %%====================================================================
 -define(DEFAULT_TIMEOUT, 5000).
 
+-define(SOCK_OPTIONS,
+        [{active, true},
+         binary,
+         {packet, 0},
+         {nodelay, true},
+         {reuseaddr, true}]).
+
+-define(DEFAULT_PORT, 8300).
+
 %%====================================================================
 %% Records
 %%====================================================================
 -record(service, {name, attributes}).
-
-
-
