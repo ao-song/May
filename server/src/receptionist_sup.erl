@@ -40,7 +40,10 @@ start_link() ->
 %% @spec add_receptionist(Socket) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-add_receptionist(Socket) -> Socket.
+add_receptionist(Socket) ->
+    {ok, Child} = supervisor:start_child(?MODULE, []),
+    ok = gen_tcp:controlling_process(Socket, Child),
+    receptionist:set_socket(Child, Socket).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -60,7 +63,7 @@ add_receptionist(Socket) -> Socket.
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    RestartStrategy = one_for_one,
+    RestartStrategy = simple_one_for_one,
     MaxRestarts = 1000,
     MaxSecondsBetweenRestarts = 3600,
 
@@ -70,8 +73,8 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-    AChild = {'AName', {'AModule', start_link, []},
-              Restart, Shutdown, Type, ['AModule']},
+    AChild = {receptionist, {receptionist, start_link, []},
+              Restart, Shutdown, Type, [receptionist]},
 
     {ok, {SupFlags, [AChild]}}.
 

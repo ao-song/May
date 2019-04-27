@@ -13,7 +13,7 @@
 -define(DEFAULT_TIMEOUT, 5000).
 
 -define(SOCK_OPTIONS,
-        [{active, true},
+        [{active, once},
          binary,
          {packet, 0},
          {nodelay, true},

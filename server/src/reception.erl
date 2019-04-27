@@ -131,8 +131,8 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
-    ok.
+terminate(_Reason, #state{listener = ListenSocket}) ->
+    gen_tcp:close(ListenSocket).
 
 %%--------------------------------------------------------------------
 %% @private

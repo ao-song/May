@@ -12,6 +12,7 @@
 
 %% API
 -export([start_link/0]).
+-export([set_socket/2]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -23,7 +24,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {socket = null}).
 
 %%%===================================================================
 %%% API
@@ -38,6 +39,9 @@
 %%--------------------------------------------------------------------
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+set_socket(Child, Socket) when is_pid(Child), is_port(Socket) ->
+    gen_server:cast(Child, {socket_ready, Socket}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -85,6 +89,8 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_cast({socket_ready, Socket}, State) ->
+    {noreply, State#state{socket = Socket}};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
