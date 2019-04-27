@@ -1,8 +1,11 @@
 %%%-------------------------------------------------------------------
-%% @doc server top level supervisor.
-%% @end
+%%% @author Ao Song
+%%% @copyright (C) 2019, Ao Song
+%%% @doc
+%%%
+%%% @end
+%%% Created : 2019-04-27 11:44:32.215529
 %%%-------------------------------------------------------------------
-
 -module(server_sup).
 
 -behaviour(supervisor).
@@ -15,24 +18,53 @@
 
 -define(SERVER, ?MODULE).
 
-%%====================================================================
-%% API functions
-%%====================================================================
+%%%===================================================================
+%%% API functions
+%%%===================================================================
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Starts the supervisor
+%%
+%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+%% @end
+%%--------------------------------------------------------------------
 start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
-%%====================================================================
-%% Supervisor callbacks
-%%====================================================================
+%%%===================================================================
+%%% Supervisor callbacks
+%%%===================================================================
 
-%% Child :: #{id => Id, start => {M, F, A}}
-%% Optional keys are restart, shutdown, type, modules.
-%% Before OTP 18 tuples must be used to specify a child. e.g.
-%% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Whenever a supervisor is started using supervisor:start_link/[2,3],
+%% this function is called by the new process to find out about
+%% restart strategy, maximum restart frequency and child
+%% specifications.
+%%
+%% @spec init(Args) -> {ok, {SupFlags, [ChildSpec]}} |
+%%                     ignore |
+%%                     {error, Reason}
+%% @end
+%%--------------------------------------------------------------------
 init([]) ->
-    {ok, { {one_for_all, 0, 1}, []} }.
+    RestartStrategy = one_for_one,
+    MaxRestarts = 1000,
+    MaxSecondsBetweenRestarts = 3600,
 
-%%====================================================================
-%% Internal functions
-%%====================================================================
+    SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
+
+    Restart = permanent,
+    Shutdown = 2000,
+    Type = worker,
+
+    AChild = {'AName', {'AModule', start_link, []},
+              Restart, Shutdown, Type, ['AModule']},
+
+    {ok, {SupFlags, [AChild]}}.
+
+%%%===================================================================
+%%% Internal functions
+%%%===================================================================
