@@ -10,6 +10,8 @@
 
 -behaviour(gen_server).
 
+-include("server.hrl").
+
 %% API
 -export([start_link/0]).
 -export([set_socket/2]).
@@ -59,6 +61,7 @@ set_socket(Child, Socket) when is_pid(Child), is_port(Socket) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+    process_flag(trap_exit, true),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -90,6 +93,7 @@ handle_call(_Request, _From, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_cast({socket_ready, Socket}, State) ->
+    inet:setopts(Socket, ?SOCK_OPTIONS),
     {noreply, State#state{socket = Socket}};
 handle_cast(_Msg, State) ->
     {noreply, State}.
