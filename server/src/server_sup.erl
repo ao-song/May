@@ -56,15 +56,11 @@ init([]) ->
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
-    Restart = permanent,
-    Shutdown = 2000,
-    Type = worker,
-
-    AChild = {'AName', {'AModule', start_link, []},
-              Restart, Shutdown, Type, ['AModule']},
-
-    {ok, {SupFlags, [AChild]}}.
+    {ok, {SupFlags, [child(reception), child(receptionist_sup)]}}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+child(Mod) ->
+    {Mod, {Mod, start_link, []},
+     permanent, 2000, worker, [Mod]}.
