@@ -26,7 +26,8 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {socket = null}).
+-record(state, {socket = null,
+                watching_services = []}).
 
 %%%===================================================================
 %%% API
@@ -108,6 +109,40 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
+    inet:setopts(Socket, [{active, once}]),
+    Data = binary_to_term(Bin),
+    NewState = handle_request(Data, State),
+    {noreply, NewState};
+handle_info({write, #service{name = Name}, _ActivityId} = TabEvent,
+            #state{watching_services = WsList} = State) ->
+    case lists:member(Name, WsList) of
+        true ->
+            notify_client(term_to_binary(TabEvent), State);
+        false ->
+            ok            
+    end,
+    {noreply, State};
+handle_info({delete_object, #service{name = Name}, _ActivityId} = TabEvent,
+            #state{watching_services = WsList} = State) ->
+    case lists:member(Name, WsList) of
+        true ->
+            notify_client(term_to_binary(TabEvent), State);
+        false ->
+            ok            
+    end,
+    {noreply, State};
+handle_info({delete, {service, Key}, _ActivityId} = TabEvent,
+            #state{watching_services = WsList} = State) ->
+    case lists:member(Key, WsList) of
+        true ->
+            notify_client(term_to_binary(TabEvent), State);
+        false ->
+            ok            
+    end,
+    {noreply, State};
+handle_info({tcp_closed, Socket}, #state{socket = Socket} = State) ->
+    {stop, normal, State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -122,7 +157,8 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(_Reason, #state{socket = Socket}) ->
+    gen_tcp:shutdown(Socket, read_write),
     ok.
 
 %%--------------------------------------------------------------------
@@ -134,11 +170,24 @@ terminate(_Reason, _State) ->
 %% @end
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
-        {ok, State}.
+    {ok, State}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+handle_request({register, Service}, State) ->
+    ok = mnesia:dirty_write(Service),
+    State;
+handle_request({deregister, Service}, State) ->
+    ok = mnesia:dirty_delete(Service),
+    State;
+handle_request({watch, #service{name = Name}}, 
+               #state{watching_services = WsList} = State) ->
+    mnesia:subscribe({table, service, simple}),
+    State#state{watching_services = [Name | WsList]}.
+
+notify_client(Bin, #state{socket = Socket}) ->
+    gen_tcp:send(Socket, Bin).
 
 
 

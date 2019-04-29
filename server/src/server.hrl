@@ -19,7 +19,7 @@
          {nodelay, true},
          {reuseaddr, true}]).
 
--define(DEFAULT_PORT, 8300).
+-define(DEFAULT_PORT, 8383).
 
 %%====================================================================
 %% Records
