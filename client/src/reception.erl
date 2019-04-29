@@ -10,8 +10,11 @@
 
 -behaviour(gen_server).
 
+-include_lib("inets/include/httpd.hrl").
+
 %% API
 -export([start_link/0]).
+-export([do/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -38,6 +41,16 @@
 %%--------------------------------------------------------------------
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Handle requests
+%%
+%% @spec do(Data) -> {proceed, OldData} | {proceed, NewData} | 
+%%                   {break, NewData} | done
+%% @end
+%%--------------------------------------------------------------------
+do(#mod{method = _Method, request_uri = _RequestUri}) -> ok.
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -136,4 +149,5 @@ get_port() -> 8585.
 get_http_config() ->
     [{port, get_port()}, {server_name, "localhost"},
      {server_root, "/tmp/sd"},
-     {document_root, "/tmp/sd/htdocs"}].
+     {document_root, "/tmp/sd/htdocs"},
+     {modules, [?MODULE]}].
