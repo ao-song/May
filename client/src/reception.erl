@@ -23,7 +23,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {http_pid}).
 
 %%%===================================================================
 %%% API
@@ -55,7 +55,8 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    {ok, #state{}}.
+    {ok, Pid} = inets:start(httpd, get_http_config()),
+    {ok, #state{http_pid = Pid}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -112,7 +113,8 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(_Reason, #state{http_pid = HttpPid}) ->
+    inets:stop(httpd, HttpPid),
     ok.
 
 %%--------------------------------------------------------------------
@@ -129,7 +131,9 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+get_port() -> 8585.
 
-
-
-
+get_http_config() ->
+    [{port, get_port()}, {server_name, "localhost"},
+     {server_root, "/tmp/sd"},
+     {document_root, "/tmp/sd/htdocs"}].
