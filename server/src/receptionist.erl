@@ -114,6 +114,7 @@ handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
     Data = binary_to_term(Bin),
     NewState = handle_request(Data, State),
     {noreply, NewState};
+%% Watch handle, need check how sdc interact with consul
 handle_info({write, #service{name = Name}, _ActivityId} = TabEvent,
             #state{watching_services = WsList} = State) ->
     case lists:member(Name, WsList) of
@@ -179,10 +180,12 @@ handle_request({register, Service}, State) ->
     ok = mnesia:dirty_write(Service),
     State;
 handle_request({deregister, Service}, State) ->
+    %% Need update with qlc query according to index flag when creating table
     ok = mnesia:dirty_delete(Service),
     State;
-handle_request({watch, #service{name = Name}}, 
+handle_request({watch, #service{name = Name}},
                #state{watching_services = WsList} = State) ->
+    %% Need update later with watch investigation
     mnesia:subscribe({table, service, simple}),
     State#state{watching_services = [Name | WsList]}.
 

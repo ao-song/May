@@ -61,7 +61,7 @@ install(Nodes) ->
                         [{disc_copies, Nodes},
                          {attributes, record_info(fields, service)},
                          {type, bag},
-                         {index, [#service.name]}]).
+                         {index, [#service.name, #service.properties]}]).
 %%====================================================================
 %% Internal functions
 %%====================================================================
