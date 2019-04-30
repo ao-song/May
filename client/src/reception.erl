@@ -10,6 +10,8 @@
 
 -behaviour(gen_server).
 
+-include("client.hrl").
+
 -include_lib("inets/include/httpd.hrl").
 
 %% API
@@ -68,6 +70,7 @@ do(#mod{method = _Method, request_uri = _RequestUri}) -> ok.
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+    ok = inets:start(permanent),
     {ok, Pid} = inets:start(httpd, get_http_config()),
     {ok, #state{http_pid = Pid}}.
 
@@ -128,6 +131,7 @@ handle_info(_Info, State) ->
 %%--------------------------------------------------------------------
 terminate(_Reason, #state{http_pid = HttpPid}) ->
     inets:stop(httpd, HttpPid),
+    inets:stop(),
     ok.
 
 %%--------------------------------------------------------------------
@@ -144,7 +148,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-get_port() -> 8585.
+get_port() -> ?DEFAULT_RECEPTION_PORT.
 
 get_http_config() ->
     [{port, get_port()}, {server_name, "localhost"},
