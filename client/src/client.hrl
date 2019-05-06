@@ -27,8 +27,11 @@
 -define(CODE_200_OK, 200).
 -define(CODE_CLIENT_ERROR, 400).
 -define(CODE_SERVER_ERROR, 500).
+-define(CODE_SERVER_UNAVAILABLE, 503).
 -define(SERVICE_SUCCESFULLY_REGISTERED, "Service succesfully registered.").
--define(SERVICE_FAILED_REGISTERED, "Service failed registered.").
+-define(SERVICE_SUCCESFULLY_DEREGISTERED, "Service succesfully deregistered.").
+-define(REQUEST_FAILED, "Request failed.").
+-define(SERVICE_NOT_SUPPORTED, "Service not supported.").
 
 -define(WATCH_ENDPOINT_BASE, "/v1/health/service/").
 -define(REGISTER_ENDPOINT, "/v1/agent/service/register").

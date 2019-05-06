@@ -58,8 +58,10 @@ handle_response(Packet) when is_binary(Packet) ->
     handle_response(binary_to_term(Packet));
 handle_response({registered, _ID}) ->
     {proceed, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_REGISTERED}};
+handle_response({deregistered, _ID}) ->
+    {proceed, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_DEREGISTERED}};
 handle_response({exit, caught, _Reason}) ->
-    {proceed, {?CODE_SERVER_ERROR, ?SERVICE_FAILED_REGISTERED}};
+    {proceed, {?CODE_SERVER_ERROR, ?REQUEST_FAILED}};
 handle_response(_Response) -> ok.
 
 %%--------------------------------------------------------------------
@@ -70,16 +72,26 @@ handle_response(_Response) -> ok.
 %%                   {break, NewData} | done
 %% @end
 %%--------------------------------------------------------------------
+do(#mod{request_uri = ?DUMMY_REQUEST_ENDPOINT}) ->
+    %% always ok with a dummy request.
+    {proceed, {?CODE_200_OK, "ok"}};
 do(#mod{request_uri = ?REGISTER_ENDPOINT, entity_body = Body}) ->
     RegMsg = construct_register_msg(Body),
     case agent:send(RegMsg, {active, false}) of
         {ok, Packet} ->
             handle_response(Packet);
         {error, _Reason} ->
-            {proceed, {?CODE_CLIENT_ERROR, ?SERVICE_FAILED_REGISTERED}}
+            {proceed, {?CODE_CLIENT_ERROR, ?REQUEST_FAILED}}
+    end;
+do(#mod{request_uri = ?DEREGISTER_ENDPOINT_BASE ++ ServiceId}) ->
+    case agent:send({deregister, ServiceId}, {active, false}) of
+        {ok, Packet} ->
+            handle_response(Packet);
+        {error, _Reason} ->
+            {proceed, {?CODE_CLIENT_ERROR, ?REQUEST_FAILED}}
     end;
 do(#mod{method = _Method, request_uri = _RequestUri}) ->
-    {proceed, {?CODE_200_OK, "ok"}}.
+    {proceed, {?CODE_SERVER_UNAVAILABLE, ?SERVICE_NOT_SUPPORTED}}.
 
 %%%===================================================================
 %%% gen_server callbacks

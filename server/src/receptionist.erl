@@ -187,10 +187,14 @@ handle_request({register, #service{id = ID} = Service}, State) ->
         exit:{aborted, Reason} ->
             {{exit, caught, Reason}, State}
     end;
-handle_request({deregister, #service{id = ID} = Service}, State) ->
-    %% Need update with qlc query according to index flag when creating table
-    ok = mnesia:dirty_delete(Service),
-    {ID, State};
+handle_request({deregister, ServiceId}, State) ->
+    try mnesia:dirty_delete({service, ServiceId}) of
+        ok ->
+            {{deregistered, ServiceId}, State}
+    catch
+        exit:{aborted, Reason} ->
+            {{exit, caught, Reason}, State}
+    end;
 handle_request({watch, #service{id = ID, name = Name}},
                #state{watching_services = WsList} = State) ->
     %% Need update later with watch investigation
