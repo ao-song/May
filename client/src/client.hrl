@@ -19,6 +19,8 @@
          {nodelay, true},
          {reuseaddr, true}]).
 
+-define(CONFIG_FILE, "client.conf").
+
 -define(DEFAULT_SERVER_PORT, 8383).
 -define(DEFAULT_RECEPTION_PORT, 8585).
 

@@ -3,6 +3,8 @@
 %%% @copyright (C) 2019, Ao Song
 %%% @doc
 %%%
+%%% A simple http server handle the requests from application.
+%%%
 %%% @end
 %%% Created : 2019-04-29 12:25:37.577465
 %%%-------------------------------------------------------------------
@@ -17,6 +19,7 @@
 %% API
 -export([start_link/0]).
 -export([do/1]).
+-export([handle_response/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -43,6 +46,15 @@
 %%--------------------------------------------------------------------
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Handle the response from server
+%%
+%% @spec handle_response(Response) -> ok | {error, Reason}
+%% @end
+%%--------------------------------------------------------------------
+handle_response(Response) -> ok.
 
 %%--------------------------------------------------------------------
 %% @doc

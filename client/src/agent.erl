@@ -3,6 +3,9 @@
 %%% @copyright (C) 2019, Ao Song
 %%% @doc
 %%%
+%%% For prototype, currently client will keep this connection, maybe
+%%% it is not necessary which could be updated base on real needs.
+%%%
 %%% @end
 %%% Created : 2019-04-29 12:25:02.679847
 %%%-------------------------------------------------------------------
@@ -10,8 +13,11 @@
 
 -behaviour(gen_server).
 
+-include("client.hrl").
+
 %% API
 -export([start_link/0]).
+-export([send/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -23,7 +29,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {srv_ip, srv_port, srv_sock}).
 
 %%%===================================================================
 %%% API
@@ -38,6 +44,19 @@
 %%--------------------------------------------------------------------
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Send data to server
+%%
+%% @spec send(Data) -> ok | {error, Reason}
+%% @end
+%%--------------------------------------------------------------------
+send(Data) when is_binary(Data) ->
+    gen_server:call(?MODULE, {send_packet, Data});
+send(Data) ->
+    Bin = term_to_binary(Data),
+    gen_server:call(?MODULE, {send_packet, Bin}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -55,7 +74,11 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    {ok, #state{}}.
+    {ok, Config} = file:consult(?CONFIG_FILE),
+    Port = get_srv_port(Config),
+    Host = get_srv_Host(Config),
+    {ok, Socket} = gen_tcp:connect(Host, Port, ?SOCK_OPTIONS),
+    {ok, #state{srv_ip = Host, srv_port = Port, srv_sock = Socket}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -71,6 +94,10 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call({send_packet, Data}, _From,
+            #state{srv_sock = Socket} = State) ->
+    Reply = gen_tcp:send(Socket, Data),
+    {reply, Reply, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -98,6 +125,13 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_info({tcp, Socket, Bin}, #state{srv_sock = Socket} = State) ->
+    inet:setopts(Socket, [{active, once}]),
+    Data = binary_to_term(Bin),
+    reception:handle_response(Data),
+    {noreply, State};
+handle_info({tcp_closed, Socket}, #state{srv_sock = Socket} = State) ->
+    {stop, normal, State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -112,7 +146,8 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(_Reason, #state{srv_sock = Socket}) ->
+    gen_tcp:shutdown(Socket, read_write),
     ok.
 
 %%--------------------------------------------------------------------
@@ -129,7 +164,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+get_srv_port(_Config) -> ?DEFAULT_SERVER_PORT.
 
+get_srv_Host(Config) ->
+    {server_ip, SrvAddr} = lists:keyfind(server_ip, 1, Config),
+    {ok, Addr} = inet:parse_address(SrvAddr),
+    Addr.
 
 
 

@@ -3,6 +3,9 @@
 %%% @copyright (C) 2019, Ao Song
 %%% @doc
 %%%
+%%% Reception desk of the server which will assign a receptionist for
+%%% an incoming connection request.
+%%%
 %%% @end
 %%% Created : 2019-04-26 10:08:27.011782
 %%%-------------------------------------------------------------------

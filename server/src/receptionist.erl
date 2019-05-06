@@ -3,6 +3,8 @@
 %%% @copyright (C) 2019, Ao Song
 %%% @doc
 %%%
+%%% Handle the requests from client.
+%%%
 %%% @end
 %%% Created : 2019-04-26 19:37:46.202266
 %%%-------------------------------------------------------------------
@@ -114,7 +116,7 @@ handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
     Data = binary_to_term(Bin),
     NewState = handle_request(Data, State),
     {noreply, NewState};
-%% Watch handle, need check how sdc interact with consul
+%% Table events received when watch, need check how sdc interact with consul
 handle_info({write, #service{name = Name}, _ActivityId} = TabEvent,
             #state{watching_services = WsList} = State) ->
     case lists:member(Name, WsList) of
