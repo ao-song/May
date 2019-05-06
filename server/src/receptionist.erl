@@ -114,7 +114,8 @@ handle_cast(_Msg, State) ->
 handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
     inet:setopts(Socket, [{active, once}]),
     Data = binary_to_term(Bin),
-    NewState = handle_request(Data, State),
+    {Reply, NewState} = handle_request(Data, State),
+    ok = gen_tcp:send(Socket, term_to_binary(Reply)),
     {noreply, NewState};
 %% Table events received when watch, need check how sdc interact with consul
 handle_info({write, #service{name = Name}, _ActivityId} = TabEvent,
@@ -178,18 +179,18 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-handle_request({register, Service}, State) ->
+handle_request({register, #service{id = ID} = Service}, State) ->
     ok = mnesia:dirty_write(Service),
-    State;
-handle_request({deregister, Service}, State) ->
+    {{registered, ID}, State};
+handle_request({deregister, #service{id = ID} = Service}, State) ->
     %% Need update with qlc query according to index flag when creating table
     ok = mnesia:dirty_delete(Service),
-    State;
-handle_request({watch, #service{name = Name}},
+    {ID, State};
+handle_request({watch, #service{id = ID, name = Name}},
                #state{watching_services = WsList} = State) ->
     %% Need update later with watch investigation
     mnesia:subscribe({table, service, simple}),
-    State#state{watching_services = [Name | WsList]}.
+    {ID, State#state{watching_services = [Name | WsList]}}.
 
 notify_client(Bin, #state{socket = Socket}) ->
     gen_tcp:send(Socket, Bin).

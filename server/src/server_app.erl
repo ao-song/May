@@ -60,7 +60,7 @@ install(Nodes) ->
     mnesia:create_table(service,
                         [{disc_copies, Nodes},
                          {attributes, record_info(fields, service)},
-                         {type, bag},
+                         {type, set},
                          {index, [#service.name, #service.properties]}]).
 %%====================================================================
 %% Internal functions

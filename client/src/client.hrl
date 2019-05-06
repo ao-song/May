@@ -34,4 +34,4 @@
 %%====================================================================
 %% Records
 %%====================================================================
--record(service, {id, name, address, properties}).
+-record(service, {id, name, address, port, properties}).

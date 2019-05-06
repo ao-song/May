@@ -54,17 +54,20 @@ start_link() ->
 %% @spec handle_response(Response) -> ok | {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
+handle_response({registered, _ID}) -> ok;
 handle_response(_Response) -> ok.
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Handle requests
+%% Handle http requests
 %%
 %% @spec do(Data) -> {proceed, OldData} | {proceed, NewData} | 
 %%                   {break, NewData} | done
 %% @end
 %%--------------------------------------------------------------------
-do(#mod{request_uri = ?REGISTER_ENDPOINT, entity_body = _Body}) ->
+do(#mod{request_uri = ?REGISTER_ENDPOINT, entity_body = Body}) ->
+    RegMsg = construct_register_msg(Body),
+    agent:send(RegMsg),
     ok;
 do(#mod{method = _Method, request_uri = _RequestUri}) ->
     ok.
@@ -170,3 +173,12 @@ get_http_config() ->
      {server_root, "/tmp/sd"},
      {document_root, "/tmp/sd/htdocs"},
      {modules, [?MODULE]}].
+
+construct_register_msg(Body) ->
+    ParsedBody = jsone:decode(list_to_binary(Body)),
+    {register, 
+     #service{id = maps:get(list_to_binary("ID"), ParsedBody),
+              name = maps:get(list_to_binary("Name"), ParsedBody),
+              address = maps:get(list_to_binary("Address"), ParsedBody),
+              port = maps:get(list_to_binary("Port"), ParsedBody),
+              properties = maps:get(list_to_binary("Tags"), ParsedBody)}}.
