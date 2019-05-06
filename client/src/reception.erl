@@ -54,7 +54,7 @@ start_link() ->
 %% @spec handle_response(Response) -> ok | {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
-handle_response(Response) -> ok.
+handle_response(_Response) -> ok.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -64,7 +64,10 @@ handle_response(Response) -> ok.
 %%                   {break, NewData} | done
 %% @end
 %%--------------------------------------------------------------------
-do(#mod{method = _Method, request_uri = _RequestUri}) -> ok.
+do(#mod{request_uri = ?REGISTER_ENDPOINT, entity_body = _Body}) ->
+    ok;
+do(#mod{method = _Method, request_uri = _RequestUri}) ->
+    ok.
 
 %%%===================================================================
 %%% gen_server callbacks
