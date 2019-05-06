@@ -24,6 +24,12 @@
 -define(DEFAULT_SERVER_PORT, 8383).
 -define(DEFAULT_RECEPTION_PORT, 8585).
 
+-define(CODE_200_OK, 200).
+-define(CODE_CLIENT_ERROR, 400).
+-define(CODE_SERVER_ERROR, 500).
+-define(SERVICE_SUCCESFULLY_REGISTERED, "Service succesfully registered.").
+-define(SERVICE_FAILED_REGISTERED, "Service failed registered.").
+
 -define(WATCH_ENDPOINT_BASE, "/v1/health/service/").
 -define(REGISTER_ENDPOINT, "/v1/agent/service/register").
 -define(DEREGISTER_ENDPOINT_BASE, "/v1/agent/service/deregister/").

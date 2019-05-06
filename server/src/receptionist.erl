@@ -180,8 +180,13 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 handle_request({register, #service{id = ID} = Service}, State) ->
-    ok = mnesia:dirty_write(Service),
-    {{registered, ID}, State};
+    try mnesia:dirty_write(Service) of
+        ok ->
+            {{registered, ID}, State}
+    catch
+        exit:{aborted, Reason} ->
+            {{exit, caught, Reason}, State}
+    end;
 handle_request({deregister, #service{id = ID} = Service}, State) ->
     %% Need update with qlc query according to index flag when creating table
     ok = mnesia:dirty_delete(Service),

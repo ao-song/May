@@ -17,7 +17,7 @@
 
 %% API
 -export([start_link/0]).
--export([send/1]).
+-export([send/1, send/2]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -58,6 +58,13 @@ send(Data) ->
     Bin = term_to_binary(Data),
     gen_server:call(?MODULE, {send_packet, Bin}).
 
+send(Data, ActiveMode) when is_binary(Data) ->
+    gen_server:call(?MODULE, {send_packet, Data, ActiveMode});
+send(Data, ActiveMode) ->
+    Bin = term_to_binary(Data),
+    gen_server:call(?MODULE, {send_packet, Bin, ActiveMode}).
+
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -97,6 +104,21 @@ init([]) ->
 handle_call({send_packet, Data}, _From,
             #state{srv_sock = Socket} = State) ->
     Reply = gen_tcp:send(Socket, Data),
+    {reply, Reply, State};
+handle_call({send_packet, Data, {active, false}}, _From,
+            #state{srv_sock = Socket} = State) ->
+    inet:setopts(Socket, [{active, false}]),
+    ok = gen_tcp:send(Socket, Data),
+    Reply = gen_tcp:recv(Socket, 0),
+    %% socket should be active by default.
+    inet:setopts(Socket, [{active, once}]),
+    {reply, Reply, State};
+handle_call({send_packet, Data, ActiveMode}, _From,
+            #state{srv_sock = Socket} = State) ->
+    inet:setopts(Socket, [ActiveMode]),
+    Reply = gen_tcp:send(Socket, Data),
+    %% socket should be active by default.
+    inet:setopts(Socket, [{active, once}]),
     {reply, Reply, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
