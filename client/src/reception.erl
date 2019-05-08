@@ -90,6 +90,19 @@ do(#mod{request_uri = ?DEREGISTER_ENDPOINT_BASE ++ ServiceId}) ->
         {error, _Reason} ->
             {proceed, {?CODE_CLIENT_ERROR, ?REQUEST_FAILED}}
     end;
+do(#mod{request_uri = ?WATCH_ENDPOINT_BASE ++ _ServiceNameAndParas,
+        absolute_uri = AbUri}) ->
+    {ok, {_Scheme, _UserInfo, _Host, _Port, Path, Query}} =
+    http_uri:parse(AbUri),
+    Queries = httpd:parse_query(Query),
+    BlockingTimeout = get_wait_time_in_query(Queries),
+    ?WATCH_ENDPOINT_BASE ++ ServiceName = Path,
+    case agent:send({watch, ServiceName, BlockingTimeout}) of
+        {ok, Packet} ->
+            handle_response(Packet);
+        {error, _Reason} ->
+            {proceed, {?CODE_CLIENT_ERROR, ?REQUEST_FAILED}}
+    end;
 do(#mod{method = _Method, request_uri = _RequestUri}) ->
     {proceed, {?CODE_SERVER_UNAVAILABLE, ?SERVICE_NOT_SUPPORTED}}.
 
@@ -203,3 +216,9 @@ construct_register_msg(Body) ->
               address = maps:get(list_to_binary("Address"), ParsedBody),
               port = maps:get(list_to_binary("Port"), ParsedBody),
               properties = maps:get(list_to_binary("Tags"), ParsedBody)}}.
+
+%% legacy from Consul, get wait time in uri query, unit in second
+%% therefore hardcoded 1 sec for now as we know the query is also
+%% hardcoded with 1 sec.
+get_wait_time_in_query(_Queries) -> 1.
+
