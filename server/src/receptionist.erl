@@ -195,11 +195,12 @@ handle_request({deregister, ServiceId}, State) ->
         exit:{aborted, Reason} ->
             {{exit, caught, Reason}, State}
     end;
-handle_request({watch, #service{id = ID, name = Name}},
+handle_request({watch, ServiceName, BlockingTimeout},
                #state{watching_services = WsList} = State) ->
     %% Need update later with watch investigation
     mnesia:subscribe({table, service, simple}),
-    {ID, State#state{watching_services = [Name | WsList]}}.
+    {ServiceName, State#state{watching_services =
+        [{ServiceName, BlockingTimeout} | WsList]}}.
 
 notify_client(Bin, #state{socket = Socket}) ->
     gen_tcp:send(Socket, Bin).
