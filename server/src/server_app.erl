@@ -24,6 +24,7 @@ start(retry, BadTabList) ->
             {error, "Retried once, database still not prepared."}
     end;
 start(_StartType, _StartArgs) ->
+    install(),
     case mnesia:wait_for_tables([service], ?DEFAULT_TIMEOUT) of
         ok -> server_sup:start_link();
         {timeout, BadTabList} ->
@@ -55,8 +56,8 @@ install() ->
 %% @end
 %%--------------------------------------------------------------------
 install(Nodes) ->
-    ok = mnesia:create_schema(Nodes),
-    ok = mnesia:start(),
+    mnesia:create_schema(Nodes),
+    mnesia:start(),
     mnesia:create_table(service,
                         [{disc_copies, Nodes},
                          {attributes, record_info(fields, service)},

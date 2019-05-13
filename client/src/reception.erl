@@ -219,8 +219,8 @@ code_change(_OldVsn, State, _Extra) ->
 get_port() -> ?DEFAULT_RECEPTION_PORT.
 
 get_http_config() ->
-    filelib:ensure_dir("/tmp/sd"),
-    filelib:ensure_dir("/tmp/sd/htdocs"),
+    filelib:ensure_dir("/tmp/sd/"),
+    filelib:ensure_dir("/tmp/sd/htdocs/"),
     [{port, get_port()}, {server_name, "localhost"},
     {server_root, "/tmp/sd"},
     {document_root, "/tmp/sd/htdocs"},
