@@ -138,7 +138,7 @@ do(#mod{method = _Method, request_uri = _RequestUri}) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    ok = inets:start(permanent),
+    inets:start(permanent),
     {ok, Pid} = inets:start(httpd, get_http_config()),
     {ok, #state{http_pid = Pid}}.
 
@@ -219,10 +219,12 @@ code_change(_OldVsn, State, _Extra) ->
 get_port() -> ?DEFAULT_RECEPTION_PORT.
 
 get_http_config() ->
+    filelib:ensure_dir("/tmp/sd"),
+    filelib:ensure_dir("/tmp/sd/htdocs"),
     [{port, get_port()}, {server_name, "localhost"},
-     {server_root, "/tmp/sd"},
-     {document_root, "/tmp/sd/htdocs"},
-     {modules, [?MODULE]}].
+    {server_root, "/tmp/sd"},
+    {document_root, "/tmp/sd/htdocs"},
+    {modules, [?MODULE]}].
 
 construct_register_msg(Body) ->
     ParsedBody = jsone:decode(list_to_binary(Body)),

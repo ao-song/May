@@ -81,9 +81,16 @@ send(Data, ActiveMode) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    {ok, Config} = file:consult(?CONFIG_FILE),
-    Port = get_srv_port(Config),
-    Host = get_srv_Host(Config),
+    Conf =
+    case file:consult(?CONFIG_FILE) of
+        {ok, Config} -> 
+            Config;
+        {error, _Reason} ->
+            [{server_ip, ?DEFAULT_SERVER_IP},
+             {server_port, ?DEFAULT_SERVER_PORT}]
+    end,
+    Port = get_srv_port(Conf),
+    Host = get_srv_Host(Conf),
     {ok, Socket} = gen_tcp:connect(Host, Port, ?SOCK_OPTIONS),
     {ok, #state{srv_ip = Host, srv_port = Port, srv_sock = Socket}}.
 
