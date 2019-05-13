@@ -55,8 +55,8 @@ install() ->
 %% @end
 %%--------------------------------------------------------------------
 install(Nodes) ->
-    ok == mnesia:create_schema(Nodes),
-    ok == mnesia:start(),
+    ok = mnesia:create_schema(Nodes),
+    ok = mnesia:start(),
     mnesia:create_table(service,
                         [{disc_copies, Nodes},
                          {attributes, record_info(fields, service)},
