@@ -31,8 +31,17 @@ start_link() ->
 %% Before OTP 18 tuples must be used to specify a child. e.g.
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    {ok, { {one_for_all, 0, 1}, []} }.
+    RestartStrategy = one_for_one,
+    MaxRestarts = 1000,
+    MaxSecondsBetweenRestarts = 3600,
 
-%%====================================================================
-%% Internal functions
-%%====================================================================
+    SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
+
+    {ok, {SupFlags, [child(reception), child(agent)]}}.
+
+%%%===================================================================
+%%% Internal functions
+%%%===================================================================
+child(Mod) ->
+    {Mod, {Mod, start_link, []},
+     permanent, 2000, worker, [Mod]}.
