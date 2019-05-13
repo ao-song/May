@@ -60,6 +60,22 @@ handle_response({registered, _ID}) ->
     {proceed, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_REGISTERED}};
 handle_response({deregistered, _ID}) ->
     {proceed, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_DEREGISTERED}};
+handle_response({watched, ok}) ->
+    {proceed, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_WATCHED}};
+handle_response({watched, ServiceList}) ->
+    Body = service_list_to_json(ServiceList, []),
+    {proceed, {?CODE_200_OK,
+               {response, [{code, ?CODE_200_OK},
+                           {content_type, ?JSON_TYPE},
+                           {?CONSUL_INDEX_HEADER, 0}],
+                Body}}};
+handle_response({event, ServiceList}) ->
+    Body = service_list_to_json(ServiceList, []),
+    {proceed, {?CODE_200_OK,
+               {response, [{code, ?CODE_200_OK},
+                           {content_type, ?JSON_TYPE},
+                           {?CONSUL_INDEX_HEADER, 0}],
+                Body}}};
 handle_response({exit, caught, _Reason}) ->
     {proceed, {?CODE_SERVER_ERROR, ?REQUEST_FAILED}};
 handle_response(_Response) -> ok.
@@ -221,4 +237,26 @@ construct_register_msg(Body) ->
 %% therefore hardcoded 1 sec for now as we know the query is also
 %% hardcoded with 1 sec.
 get_wait_time_in_query(_Queries) -> 1.
+
+service_list_to_json([], JsonList) ->
+    binary_to_list(jsone:encode(JsonList));
+service_list_to_json([#service{id = ID,
+                               name = Name,
+                               address = Address,
+                               port = Port,
+                               properties = Props} | ServiceList],
+                     JsonList) ->
+    Service = {'Service', [{'ID', c2a(ID)},
+                           {'Service', c2a(Name)},
+                           {'Address', c2a(Address)},
+                           {'Port', c2a(Port)},
+                           {'Tags', [c2a(X) || X <- Props]}]},
+    service_list_to_json(ServiceList, [Service | JsonList]).
+
+
+c2a(I) when is_atom(I) -> I;
+c2a(I) when is_integer(I) -> I;
+c2a(I) when is_list(I) -> list_to_atom(I).
+
+
 
