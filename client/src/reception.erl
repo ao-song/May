@@ -63,7 +63,8 @@ handle_response({deregistered, _ID}) ->
 handle_response({got, ServiceList}) ->
     Body = service_list_to_json(ServiceList, []),
     {proceed, [{response, {?CODE_200_OK, Body}}]};
-%% todo, json handling in erlang httpd response? watch part should in another approach.
+%% todo, json handling in erlang httpd response? watch part should
+%% be implemented in another approach.
 handle_response({watched, ok}) ->
     {proceed, [{response, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_WATCHED}}]};
 handle_response({watched, ServiceList}) ->
