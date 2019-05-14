@@ -23,7 +23,7 @@
 
 -define(DEFAULT_SERVER_IP, "127.0.0.1").
 -define(DEFAULT_SERVER_PORT, 8383).
--define(DEFAULT_RECEPTION_PORT, 8500).
+-define(DEFAULT_RECEPTION_PORT, 8301).
 
 -define(CODE_200_OK, 200).
 -define(CODE_CLIENT_ERROR, 400).
@@ -39,6 +39,7 @@
 -define(WATCH_ENDPOINT_BASE, "/v1/health/service/").
 -define(REGISTER_ENDPOINT, "/v1/agent/service/register").
 -define(DEREGISTER_ENDPOINT_BASE, "/v1/agent/service/deregister/").
+-define(GET_ENDPOINT_BASE, "/v1/agent/service/get/").
 -define(DUMMY_REQUEST_ENDPOINT, "/v1/catalog/services").
 -define(HTTP_MAX_BLOCKING_TIME, "&wait=1s").
 -define(SERVICE_INDEX, "?index=").

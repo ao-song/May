@@ -187,6 +187,15 @@ handle_request({deregister, ServiceId}, State) ->
         exit:{aborted, Reason} ->
             {{exit, caught, Reason}, State}
     end;
+handle_request({get, ServiceName}, State) ->
+    try mnesia:dirty_match_object(#service{_ = '_',
+                                           name = ServiceName}) of
+        ServiceList ->
+            {{got, ServiceList}, State}
+    catch
+        exit:{aborted, Reason} ->
+            {{exit, caught, Reason}, State}
+    end;
 handle_request({watch, ServiceName, BlockingTimeout},
                #state{watching_services = WsList} = State) ->
     TimeStamp = erlang:system_time(second),
@@ -194,7 +203,7 @@ handle_request({watch, ServiceName, BlockingTimeout},
         true ->                 
             {{watched, ok}, State#state{watching_services =
              update_watching_list({ServiceName, TimeStamp, BlockingTimeout},
-                                  WsList)}};
+                                  WsList)}};                                
         false ->
             try mnesia:dirty_match_object(#service{_ = '_',
                                                    name = ServiceName}) of

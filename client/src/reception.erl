@@ -60,20 +60,23 @@ handle_response({registered, _ID}) ->
     {proceed, [{response, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_REGISTERED}}]};
 handle_response({deregistered, _ID}) ->
     {proceed, [{response, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_DEREGISTERED}}]};
+handle_response({got, ServiceList}) ->
+    Body = service_list_to_json(ServiceList, []),
+    {proceed, [{response, {?CODE_200_OK, Body}}]};
 handle_response({watched, ok}) ->
     {proceed, [{response, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_WATCHED}}]};
+%% todo, json handling in erlang httpd?
 handle_response({watched, ServiceList}) ->
     Body = service_list_to_json(ServiceList, []),
-    {proceed, [{response, [{code, ?CODE_200_OK},
-                           {content_type, ?JSON_TYPE},
-                           {?CONSUL_INDEX_HEADER, 0}],
-                Body}]};
+    {proceed, [{response, {response, [{code, ?CODE_200_OK},
+                                      {content_type, ?JSON_TYPE}],
+                           Body}}]};
+%% event should not be handled like this!
 handle_response({event, ServiceList}) ->
     Body = service_list_to_json(ServiceList, []),
-    {proceed, [{response, [{code, ?CODE_200_OK},
-                           {content_type, ?JSON_TYPE},
-                           {?CONSUL_INDEX_HEADER, 0}],
-                Body}]};
+    {proceed, [{response, {response, [{code, ?CODE_200_OK},
+                                      {content_type, ?JSON_TYPE}],
+                           Body}}]};
 handle_response({exit, caught, _Reason}) ->
     {proceed, [{response, {?CODE_SERVER_ERROR, ?REQUEST_FAILED}}]};
 handle_response(_Response) -> ok.
@@ -104,14 +107,21 @@ do(#mod{request_uri = ?DEREGISTER_ENDPOINT_BASE ++ ServiceId}) ->
         {error, _Reason} ->
             {proceed, [{response, {?CODE_CLIENT_ERROR, ?REQUEST_FAILED}}]}
     end;
+do(#mod{request_uri = ?GET_ENDPOINT_BASE ++ ServiceName}) ->
+    case agent:send({get, ServiceName}, {active, false}) of
+        {ok, Packet} ->
+            handle_response(Packet);
+        {error, _Reason} ->
+            {proceed, [{response, {?CODE_CLIENT_ERROR, ?REQUEST_FAILED}}]}
+    end;
 do(#mod{request_uri = ?WATCH_ENDPOINT_BASE ++ _ServiceNameAndParas,
         absolute_uri = AbUri}) ->
     {ok, {_Scheme, _UserInfo, _Host, _Port, Path, Query}} =
-    http_uri:parse(AbUri),
+    http_uri:parse("http://" ++ AbUri),
     Queries = httpd:parse_query(Query),
     BlockingTimeout = get_wait_time_in_query(Queries),
     ?WATCH_ENDPOINT_BASE ++ ServiceName = Path,
-    case agent:send({watch, ServiceName, BlockingTimeout}) of
+    case agent:send({watch, ServiceName, BlockingTimeout}, {active, false}) of
         {ok, Packet} ->
             handle_response(Packet);
         {error, _Reason} ->
@@ -227,11 +237,12 @@ get_http_config() ->
 construct_register_msg(Body) ->
     ParsedBody = jsone:decode(list_to_binary(Body)),
     {register, 
-     #service{id = maps:get(list_to_binary("ID"), ParsedBody),
-              name = maps:get(list_to_binary("Name"), ParsedBody),
-              address = maps:get(list_to_binary("Address"), ParsedBody),
-              port = maps:get(list_to_binary("Port"), ParsedBody),
-              properties = maps:get(list_to_binary("Tags"), ParsedBody)}}.
+     #service{id = c2l(maps:get(list_to_binary("ID"), ParsedBody)),
+              name = c2l(maps:get(list_to_binary("Name"), ParsedBody)),
+              address = c2l(maps:get(list_to_binary("Address"), ParsedBody)),
+              port = c2l(maps:get(list_to_binary("Port"), ParsedBody)),
+              properties =
+              [c2l(X) || X <- maps:get(list_to_binary("Tags"), ParsedBody)]}}.
 
 %% legacy from Consul, get wait time in uri query, unit in second
 %% therefore hardcoded 1 sec for now as we know the query is also
@@ -257,6 +268,10 @@ service_list_to_json([#service{id = ID,
 c2a(I) when is_atom(I) -> I;
 c2a(I) when is_integer(I) -> I;
 c2a(I) when is_list(I) -> list_to_atom(I).
+
+c2l(I) when is_binary(I) -> binary_to_list(I);
+c2l(I) when is_integer(I) -> I;
+c2l(I) when is_list(I) -> I.
 
 
 
