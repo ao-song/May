@@ -1,9 +1,0 @@
-[submodule "client/3pp/jsone"]
-	path = client/3pp/jsone
-	url = git@github.com:sile/jsone.git
-[submodule "client/3pp/bert.erl"]
-	path = client/3pp/bert.erl
-	url = git@github.com:mojombo/bert.erl.git
-[submodule "client/3pp/libBERT"]
-	path = client/3pp/libBERT
-	url = git@github.com:postmodern/libBERT.git
