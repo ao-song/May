@@ -215,7 +215,7 @@ terminate(_Reason, #state{http_pid = HttpPid}) ->
 %% @private
 %% @doc
 %% Convert process state when code is changed
-%%l
+%%
 %% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
 %% @end
 %%--------------------------------------------------------------------

@@ -12,6 +12,9 @@
 %%====================================================================
 -define(DEFAULT_TIMEOUT, 5000).
 
+-define(CLIENT_IP, "127.0.0.1").
+-define(CLIENT_PORT, 8080).
+
 -define(SOCK_OPTIONS,
         [{active, once},
          binary,
