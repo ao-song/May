@@ -1,8 +1,8 @@
 #ifndef SERVICE_H
 #define SERVICE_H
 
-#include<string>
-#include<vector>
+#include <string>
+#include <vector>
 
 #include "bert.h"
 
@@ -23,32 +23,32 @@ namespace May
         ~Service();
 
         const string
-        get_id();
+        GetID();
         const string
-        get_name();
+        GetName();
         const string
-        get_address();
+        GetAddress();
         const int
-        get_port();
+        GetPort();
         const vector<string>
-        get_tags();
+        GetTags();
 
         const bert_data_t*
-        get_bert();
+        GetBert();
 
     private:
-        string idM;
-        string nameM;
-        string addressM;
-        int portM;
-        vector<string> tagsM;
-        bert_data_t* bertM;
+        string m_id;
+        string m_name;
+        string m_address;
+        int m_port;
+        vector<string> m_tags;
+        bert_data_t* m_bert;
     };
 
     inline
     Service::Service()
     {
-        bertM = nullptr;
+        m_bert = nullptr;
     }
 
     inline
@@ -59,37 +59,37 @@ namespace May
 
     inline
     const string
-    Service::get_id()
+    Service::GetID()
     {
-        return idM;
+        return m_id;
     }
 
     inline
     const string
-    Service::get_name()
+    Service::GetName()
     {
-        return nameM;
+        return m_name;
     }
 
     inline
     const string
-    Service::get_address()
+    Service::GetAddress()
     {
-        return addressM;
+        return m_address;
     }
 
     inline
     const int
-    Service::get_port()
+    Service::GetPort()
     {
-        return portM;
+        return m_port;
     }
 
     inline
     const vector<string>
-    Service::get_tags()
+    Service::GetTags()
     {
-        return tagsM;
+        return m_tags;
     }
 
 }

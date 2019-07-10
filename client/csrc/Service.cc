@@ -8,17 +8,17 @@ Service::Service(
     const string& address,
     const int& port,
     const vector<string>& tags)
-:   idM(id),
-    nameM(name),
-    addressM(address),
-    portM(port),
-    tagsM(tags)
+:   m_id(id),
+    m_name(name),
+    m_address(address),
+    m_port(port),
+    m_tags(tags)
 {
     // empty
 }
 
 const bert_data_t*
-Service::get_bert()
+Service::GetBert()
 {
     
 }
