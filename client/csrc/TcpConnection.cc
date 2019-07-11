@@ -17,7 +17,7 @@ TcpConnection::TcpConnection(
     m_ip_version(None),
     m_socket(SOCKET_NOT_SET)
 {
-    // empty
+    memset(&m_event, 0, sizeof(struct epoll_event));
 }
 
 TcpConnection::~TcpConnection()
@@ -130,4 +130,12 @@ TcpConnection::Init()
             // epoll part
         }
     }
+}
+
+void
+TcpConnection::SetEvent(EVENT_TYPE events)
+{
+    m_event.events = events;
+    m_event.data.fd = m_socket;
+    m_event.data.ptr = this;
 }

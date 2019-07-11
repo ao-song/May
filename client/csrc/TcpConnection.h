@@ -2,6 +2,7 @@
 #define TCP_CONNECTION_H
 
 #include <string>
+#include <cstdint>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -12,9 +13,11 @@ using namespace std;
 
 #define SOCKET_NOT_SET -1
 
+typedef uint32_t EVENT_TYPE;
+
 namespace May
 {
-    class TcpConnection : public EventHandler
+    class TcpConnection
     {
     public:
         TcpConnection(
@@ -39,6 +42,7 @@ namespace May
 
         enum {None, IPv4, IPv6} m_ip_version;
         int m_socket;
+        struct epoll_event m_event;
 
         bool
         SetInetAddr();
@@ -46,6 +50,8 @@ namespace May
         MakeNonBlocking(int socket);
         void
         CleanSocket();
+        void
+        SetEvent(EVENT_TYPE events);
     };
 }
 
