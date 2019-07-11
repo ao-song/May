@@ -3,6 +3,8 @@
 
 #include "EventHandlerTable.h"
 
+typedef uint32_t EventType;
+
 namespace May
 {
     class EventHandler
@@ -16,7 +18,10 @@ namespace May
 
         virtual ~EventHandler();
 
-        virtual bool HandleEvent() = 0;
+        virtual bool HandleEvent(
+            EventType events,
+            int fd) = 0;
+        virtual void Close() = 0;
 
     private:
         EventHandlerTable*  m_table;

@@ -71,3 +71,26 @@ EventHandlerTable::DeleteEvent(struct epoll_event* event)
         return false;
     }
 }
+
+void
+EventHandlerTable::HandleEvents()
+{
+    int num = epoll_wait(m_epfd,
+                         m_events,
+                         MAX_EPOLL_EVENTS,
+                         EPOLL_TIMEOUT);
+
+    for (int i = 0; i < num; ++i)
+    {
+        EventHandler* handler = 
+            static_cast<EventHandler*>(m_events[i].data.ptr);
+        int fd = m_events[i].data.fd;
+
+        assert(handler != 0);
+        if (handler->HandleEvent(m_events[i].events,
+                                 fd) == false)
+        {
+            handler->Close();
+        }
+   }   
+}

@@ -4,29 +4,33 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "TcpConnection.h"
+#include "TcpClient.h"
 
 using namespace std;
 using namespace May;
 
-TcpConnection::TcpConnection(
-    string addr,
-    int port)
-:   m_addr_str(addr),
-    m_port(port),
+TcpClient::TcpClient(
+    string ip,
+    int port,
+    EventHandlerTable* table)
+:   EventHandler(table),
+    m_srv_addr_str(ip),
+    m_srv_port(port),
     m_ip_version(None),
-    m_socket(SOCKET_NOT_SET)
+    m_socket(SOCKET_NOT_SET),
+    m_state(Idle)
 {
     memset(&m_event, 0, sizeof(struct epoll_event));
+    SetET();
 }
 
-TcpConnection::~TcpConnection()
+TcpClient::~TcpClient()
 {
     CleanSocket();
 }
 
 void
-TcpConnection::CleanSocket()
+TcpClient::CleanSocket()
 {
     if (m_socket != SOCKET_NOT_SET)
     {
@@ -36,29 +40,29 @@ TcpConnection::CleanSocket()
 }
 
 bool
-TcpConnection::SetInetAddr()
+TcpClient::SetInetAddr()
 {
     // remove spaces in address string
-    m_addr_str.erase(
-        remove_if(m_addr_str.begin(), m_addr_str.end(), ::isspace),
-        m_addr_str.end());
+    m_srv_addr_str.erase(
+        remove_if(m_srv_addr_str.begin(), m_srv_addr_str.end(), ::isspace),
+        m_srv_addr_str.end());
     
     if (inet_pton(AF_INET,
-                  m_addr_str.c_str(),
-                  &(m_addr_inet.addr_in4.sin_addr)) == 1)
+                  m_srv_addr_str.c_str(),
+                  &(m_srv_addr_inet.addr_in4.sin_addr)) == 1)
     {
         m_ip_version = IPv4;
-        m_addr_inet.addr_in4.sin_family = AF_INET;
-        m_addr_inet.addr_in4.sin_port = htons(m_port);
+        m_srv_addr_inet.addr_in4.sin_family = AF_INET;
+        m_srv_addr_inet.addr_in4.sin_port = htons(m_srv_port);
         return true;
     }
     else if (inet_pton(AF_INET6,
-                       m_addr_str.c_str(),
-                       &(m_addr_inet.addr_in6.sin6_addr)) == 1)
+                       m_srv_addr_str.c_str(),
+                       &(m_srv_addr_inet.addr_in6.sin6_addr)) == 1)
     {
         m_ip_version = IPv6;
-        m_addr_inet.addr_in6.sin6_family = AF_INET6;
-        m_addr_inet.addr_in6.sin6_port = htons(m_port);
+        m_srv_addr_inet.addr_in6.sin6_family = AF_INET6;
+        m_srv_addr_inet.addr_in6.sin6_port = htons(m_srv_port);
         return true;
     }
     else
@@ -68,7 +72,7 @@ TcpConnection::SetInetAddr()
 }
 
 bool
-TcpConnection::MakeNonBlocking(int socket)
+TcpClient::MakeNonBlocking(int socket)
 {
     int flags = fcntl(socket, F_GETFL, 0);
     if (fcntl(socket, F_SETFL, flags | O_NONBLOCK) != 0)
@@ -80,7 +84,7 @@ TcpConnection::MakeNonBlocking(int socket)
 }
 
 bool
-TcpConnection::Init()
+TcpClient::Init()
 {
     if (!SetInetAddr())
     {
@@ -88,7 +92,7 @@ TcpConnection::Init()
         return false;
     }
 
-    m_socket = socket(m_addr_inet.addrRaw.sa_family,
+    m_socket = socket(m_srv_addr_inet.addrRaw.sa_family,
                       SOCK_STREAM,
                       0);
     if (m_socket == -1)
@@ -117,8 +121,8 @@ TcpConnection::Init()
     }
 
     if (connect(m_socket,
-                &m_addr_inet.addrRaw,
-                sizeof(&m_addr_inet.addrRaw)) != 0)
+                &m_srv_addr_inet.addrRaw,
+                sizeof(&m_srv_addr_inet.addrRaw)) != 0)
     {
         if (errno != EINPROGRESS)
         {
@@ -127,15 +131,26 @@ TcpConnection::Init()
         }
         else
         {
-            // epoll part
+            // connection in progress
+            m_state = Connecting;            
+            return true;
         }
     }
+
+    m_state = Established;
+    return true;
 }
 
 void
-TcpConnection::SetEvent(EVENT_TYPE events)
+TcpClient::SetEvent(EVENT_TYPE events)
 {
     m_event.events = events;
     m_event.data.fd = m_socket;
     m_event.data.ptr = this;
+}
+
+void
+TcpClient::SetET()
+{
+    m_event.events |= EPOLLET;
 }

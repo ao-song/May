@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <cstring>
+#include <cassert>
 #include <sys/epoll.h>
 
 #define FD_NOT_SET    -1
@@ -26,9 +27,12 @@ namespace May
         virtual ~EventHandlerTable();
 
         bool Init();
+
         bool AddEvent(struct epoll_event* event);
         bool ModifyEvent(struct epoll_event* event);
         bool DeleteEvent(struct epoll_event* event);
+
+        void HandleEvents();
 
     private:
         int m_epfd;

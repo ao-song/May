@@ -17,32 +17,47 @@ typedef uint32_t EVENT_TYPE;
 
 namespace May
 {
-    class TcpConnection
+    class TcpClient : public EventHandler
     {
     public:
-        TcpConnection(
-            string addr,
-            int port);                  
-        ~TcpConnection();
+        typedef enum
+        {
+            Idle,
+            Connecting,
+            Established,
+            Listen // client, this is optional
+        } State;
+
+        TcpClient(
+            string ip,
+            int port,
+            EventHandlerTable* table);                  
+        ~TcpClient();
 
         bool Init();
 
         int Register();
         int Watch();
+
+        virtual bool HandleEvent(
+            EventType events,
+            int fd);
+        virtual void Close();
     private:
-        string m_addr_str;
-        int m_port;
+        string m_srv_addr_str;
+        int m_srv_port;
 
         union Address
         {
             struct sockaddr_in6 addr_in6;
             struct sockaddr_in  addr_in4;            
             struct sockaddr     addrRaw;
-        } m_addr_inet;
+        } m_srv_addr_inet;
 
         enum {None, IPv4, IPv6} m_ip_version;
         int m_socket;
         struct epoll_event m_event;
+        State m_state;
 
         bool
         SetInetAddr();
@@ -52,6 +67,8 @@ namespace May
         CleanSocket();
         void
         SetEvent(EVENT_TYPE events);
+        void
+        SetET();
     };
 }
 
