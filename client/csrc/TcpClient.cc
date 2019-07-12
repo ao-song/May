@@ -29,11 +29,11 @@ TcpClient::TcpClient(
 
 TcpClient::~TcpClient()
 {
-    CleanSocket();
+    Close();
 }
 
 void
-TcpClient::CleanSocket()
+TcpClient::Close()
 {
     if (m_socket != SOCKET_NOT_SET)
     {
@@ -111,7 +111,7 @@ TcpClient::Init()
                    (const char*)&flag,
                    sizeof(flag)) != 0)
     {
-        CleanSocket();
+        Close();
         return false;
     }
 
@@ -119,7 +119,7 @@ TcpClient::Init()
 
     if (!MakeNonBlocking(m_socket))
     {
-        CleanSocket();
+        Close();
         return false;
     }
 
@@ -129,7 +129,7 @@ TcpClient::Init()
     {
         if (errno != EINPROGRESS)
         {
-            CleanSocket();
+            Close();
             return false;
         }
         else
@@ -183,12 +183,70 @@ TcpClient::SetET()
     m_event.events |= EPOLLET;
 }
 
+bool
+TcpClient::IsConnected()
+{
+    if (m_state == Established)
+    {
+        return true;
+    }
+
+    if (m_state == Connecting)
+    {
+        SetEvent(EPOLLOUT);
+        GetTable()->HandleEvents();
+        return (m_state == Established);
+    }
+
+    return false;
+}
+
 TcpClient::Action
 TcpClient::Send(
     const void* data,
     size_t length)
 {
-    const ssize_t result = send(m_socket, data, length, 0);
+    if (!IsConnected())
+    {
+        return CallAgain;
+    }
+
+    ssize_t result = send(m_socket, data, length, 0);
+
+    if (result < 0)
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+        {
+            SetEvent(EPOLLOUT);
+            return WaitForEvent;
+        }
+        return RemoveConnection;
+    }
+
+    if (result == length)
+    {
+        return CallAgain;
+    }
+}
+
+TcpClient::Action
+TcpClient::Receive(
+    void* buffer,
+    size_t length)
+{
+    ssize_t result = recv(m_socket, buffer, length, 0);
+
+    if (result < 0)
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+        {
+            SetEvent(EPOLLIN);
+            return WaitForEvent;
+        }
+        return RemoveConnection;
+    }
+
+    return CallAgain;
 }
 
 void
@@ -209,12 +267,14 @@ TcpClient::HandleEvent(
         if (events & EPOLLOUT)
         {
             m_state = Established;
+            SetEvent(EPOLLIN | EPOLLOUT);
         }
         break;
     }
     case Established:
     {
-        
+        m_owner->HandleEventResult(this, events);
+        break;
     }
     
     default:

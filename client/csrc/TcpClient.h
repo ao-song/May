@@ -80,13 +80,13 @@ namespace May
         bool
         MakeNonBlocking(int socket);
         void
-        CleanSocket();
-        void
         SetEvent(EVENT_TYPE events);
         void
         ResetEvent();
         void
         SetET();
+        bool
+        IsConnected();
     };
 }
 
