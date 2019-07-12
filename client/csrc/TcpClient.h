@@ -26,11 +26,12 @@ namespace May
             Idle,
             Connecting,
             Established,
-            Listen // client, this is optional
+            Listen // not used in client
         } State;
 
         typedef enum
         {
+            JobDone,
             CallAgain,
             WaitForEvent,
             RemoveConnection
@@ -83,8 +84,6 @@ namespace May
         SetEvent(EVENT_TYPE events);
         void
         ResetEvent();
-        void
-        SetET();
         bool
         IsConnected();
     };

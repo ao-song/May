@@ -24,7 +24,6 @@ TcpClient::TcpClient(
     m_owner(owner)
 {
     memset(&m_event, 0, sizeof(struct epoll_event));
-    SetET();
 }
 
 TcpClient::~TcpClient()
@@ -35,6 +34,11 @@ TcpClient::~TcpClient()
 void
 TcpClient::Close()
 {
+    if (m_flag_set_event)
+    {
+        ResetEvent();
+    }
+
     if (m_socket != SOCKET_NOT_SET)
     {
         close(m_socket);
@@ -149,7 +153,8 @@ TcpClient::Init()
 void
 TcpClient::SetEvent(EVENT_TYPE events)
 {
-    m_event.events |= events;
+    // always set with ET.
+    m_event.events = events | EPOLLET;
     m_event.data.fd = m_socket;
     m_event.data.ptr = this;
 
@@ -173,14 +178,7 @@ TcpClient::ResetEvent()
     table->DeleteEvent(&m_event);
 
     memset(&m_event, 0, sizeof(struct epoll_event));
-    SetET();
     m_flag_set_event = false;
-}
-
-void
-TcpClient::SetET()
-{
-    m_event.events |= EPOLLET;
 }
 
 bool
@@ -206,7 +204,7 @@ TcpClient::Send(
     const void* data,
     size_t length)
 {
-    if (!IsConnected())
+    if (!IsConnected() && (m_state == Connecting))
     {
         return CallAgain;
     }
@@ -225,8 +223,10 @@ TcpClient::Send(
 
     if (result == length)
     {
-        return CallAgain;
+        return JobDone;
     }
+
+    return RemoveConnection;
 }
 
 TcpClient::Action
@@ -246,7 +246,12 @@ TcpClient::Receive(
         return RemoveConnection;
     }
 
-    return CallAgain;
+    if (result == 0)
+    {
+        return RemoveConnection;
+    }
+
+    return JobDone;
 }
 
 void
@@ -267,7 +272,7 @@ TcpClient::HandleEvent(
         if (events & EPOLLOUT)
         {
             m_state = Established;
-            SetEvent(EPOLLIN | EPOLLOUT);
+            SetEvent(EPOLLIN);
         }
         break;
     }

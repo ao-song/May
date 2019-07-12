@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 
 #include "Envoy.h"
+#include "TcpClient.h"
+#include "TcpClientOwner.h"
 
 using namespace std;
 
@@ -16,7 +18,7 @@ using namespace std;
 
 namespace May
 {
-    class EnvoyTcp: public Envoy
+    class EnvoyTcp: public Envoy, public TcpClientOwner
     {
     public:
         EnvoyTcp();
@@ -25,30 +27,21 @@ namespace May
             int port);                  
         ~EnvoyTcp();
 
-        bool Init();
-
         int Register();
+        int Deregister();
         int Watch();
+
+        virtual
+        void HandleEventErr(TcpClient* client);
+        // read/write event coming
+        virtual
+        void HandleEventResult(
+            TcpClient* client,
+            EventType  events);
+            
     private:
         string m_addr_str;
         int m_port;
-
-        union Address
-        {
-            struct sockaddr_in6 addr_in6;
-            struct sockaddr_in  addr_in4;            
-            struct sockaddr     addrRaw;
-        } m_addr_inet;
-
-        enum {None, IPv4, IPv6} m_ip_version;
-        int m_socket;
-
-        bool
-        SetInetAddr();
-        bool
-        MakeNonBlocking(int socket);
-        void
-        CleanSocket();
     };
 }
 

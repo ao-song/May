@@ -12,6 +12,7 @@ namespace May
 
         virtual
         void HandleEventErr(TcpClient* client) = 0;
+        // read/write event coming
         virtual
         void HandleEventResult(
             TcpClient* client,

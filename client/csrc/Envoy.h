@@ -14,6 +14,7 @@ namespace May
         }
 
         virtual int Register() = 0;
+        virtual int Deregister() = 0;
         virtual int Watch() = 0;
     };
 }
