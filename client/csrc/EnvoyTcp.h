@@ -9,6 +9,7 @@
 #include "Envoy.h"
 #include "TcpClient.h"
 #include "TcpClientOwner.h"
+#include "Buffer.h"
 
 using namespace std;
 
@@ -38,7 +39,7 @@ namespace May
         void HandleEventResult(
             TcpClient* client,
             EventType  events);
-            
+
     private:
         string m_addr_str;
         int m_port;

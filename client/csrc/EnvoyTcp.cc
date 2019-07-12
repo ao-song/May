@@ -39,4 +39,14 @@ void
 EnvoyTcp::HandleEventResult(
     TcpClient* client,
     EventType  events)
-{}
+{
+    if (events & EPOLLIN)
+    {
+        // read
+        // TcpClient::Action res = client->Receive();
+    }
+    else if (events & EPOLLOUT)
+    {
+        // write
+    }
+}
