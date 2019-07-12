@@ -2,6 +2,7 @@
 #define ENVOY_TCP_H
 
 #include <string>
+#include <list>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -43,6 +44,7 @@ namespace May
     private:
         string m_addr_str;
         int m_port;
+        list<Buffer> m_buffer_list;
     };
 }
 
