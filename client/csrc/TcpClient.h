@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 
 #include "EventHandler.h"
+#include "TcpClientOwner.h"
 
 using namespace std;
 
@@ -28,21 +29,34 @@ namespace May
             Listen // client, this is optional
         } State;
 
+        typedef enum
+        {
+            CallAgain,
+            WaitForEvent,
+            RemoveConnection
+        } Action;
+
         TcpClient(
             string ip,
             int port,
-            EventHandlerTable* table);                  
+            EventHandlerTable* table,
+            TcpClientOwner* owner);                  
         ~TcpClient();
 
         bool Init();
 
-        int Register();
-        int Watch();
+        virtual Action Send(
+            const void* data,
+            size_t length);
+        virtual Action Receive(
+            void* buffer,
+            size_t length);
+        virtual void Close();
 
-        virtual bool HandleEvent(
+        virtual void HandleEvent(
             EventType events,
             int fd);
-        virtual void Close();
+        
     private:
         string m_srv_addr_str;
         int m_srv_port;
@@ -58,6 +72,8 @@ namespace May
         int m_socket;
         struct epoll_event m_event;
         State m_state;
+        bool m_flag_set_event;
+        TcpClientOwner* m_owner;
 
         bool
         SetInetAddr();
@@ -67,6 +83,8 @@ namespace May
         CleanSocket();
         void
         SetEvent(EVENT_TYPE events);
+        void
+        ResetEvent();
         void
         SetET();
     };

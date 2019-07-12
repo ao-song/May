@@ -87,10 +87,6 @@ EventHandlerTable::HandleEvents()
         int fd = m_events[i].data.fd;
 
         assert(handler != 0);
-        if (handler->HandleEvent(m_events[i].events,
-                                 fd) == false)
-        {
-            handler->Close();
-        }
-   }   
+        handler->HandleEvent(m_events[i].events, fd);
+    }   
 }

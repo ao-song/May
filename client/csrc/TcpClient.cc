@@ -12,13 +12,16 @@ using namespace May;
 TcpClient::TcpClient(
     string ip,
     int port,
-    EventHandlerTable* table)
+    EventHandlerTable* table,
+    TcpClientOwner* owner)
 :   EventHandler(table),
     m_srv_addr_str(ip),
     m_srv_port(port),
     m_ip_version(None),
     m_socket(SOCKET_NOT_SET),
-    m_state(Idle)
+    m_state(Idle),
+    m_flag_set_event(false),
+    m_owner(owner)
 {
     memset(&m_event, 0, sizeof(struct epoll_event));
     SetET();
@@ -132,7 +135,9 @@ TcpClient::Init()
         else
         {
             // connection in progress
-            m_state = Connecting;            
+            m_state = Connecting;
+            SetEvent(EPOLLOUT);
+            GetTable()->HandleEvents();            
             return true;
         }
     }
@@ -144,13 +149,75 @@ TcpClient::Init()
 void
 TcpClient::SetEvent(EVENT_TYPE events)
 {
-    m_event.events = events;
+    m_event.events |= events;
     m_event.data.fd = m_socket;
     m_event.data.ptr = this;
+
+    EventHandlerTable* table = GetTable();
+
+    if (m_flag_set_event)
+    {        
+        table->ModifyEvent(&m_event);
+    }
+    else
+    {
+        table->AddEvent(&m_event);
+        m_flag_set_event = true;
+    }    
+}
+
+void
+TcpClient::ResetEvent()
+{
+    EventHandlerTable* table = GetTable();
+    table->DeleteEvent(&m_event);
+
+    memset(&m_event, 0, sizeof(struct epoll_event));
+    SetET();
+    m_flag_set_event = false;
 }
 
 void
 TcpClient::SetET()
 {
     m_event.events |= EPOLLET;
+}
+
+TcpClient::Action
+TcpClient::Send(
+    const void* data,
+    size_t length)
+{
+    const ssize_t result = send(m_socket, data, length, 0);
+}
+
+void
+TcpClient::HandleEvent(
+    EventType events,
+    int fd)
+{
+    if (events & (EPOLLHUP | EPOLLERR))
+    {
+        // Close();
+        m_owner->HandleEventErr(this);
+    }
+
+    switch (m_state)
+    {
+    case Connecting:
+    {
+        if (events & EPOLLOUT)
+        {
+            m_state = Established;
+        }
+        break;
+    }
+    case Established:
+    {
+        
+    }
+    
+    default:
+        break;
+    }
 }

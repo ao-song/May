@@ -18,14 +18,22 @@ namespace May
 
         virtual ~EventHandler();
 
-        virtual bool HandleEvent(
+        virtual void HandleEvent(
             EventType events,
             int fd) = 0;
         virtual void Close() = 0;
 
+        EventHandlerTable* GetTable();
+
     private:
         EventHandlerTable*  m_table;
     };
+
+    inline
+    EventHandlerTable* EventHandler::GetTable()
+    {
+        return m_table;
+    }
 }
 
 #endif
