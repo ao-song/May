@@ -30,9 +30,9 @@ namespace May
             int port);                  
         ~EnvoyTcp();
 
-        int Register();
-        int Deregister();
-        int Watch();
+        int Register(Service* service);
+        int Deregister(const string* service_id);
+        int Watch(Service* service);
 
         virtual
         void HandleEventErr(TcpClient* client);

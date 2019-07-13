@@ -1,6 +1,8 @@
 #ifndef ENVOY_H
 #define ENVOY_H
 
+#include "Service.h"
+
 namespace May
 {
     class Envoy
@@ -13,9 +15,9 @@ namespace May
             // empty
         }
 
-        virtual int Register() = 0;
-        virtual int Deregister() = 0;
-        virtual int Watch() = 0;
+        virtual int Register(Service* service) = 0;
+        virtual int Deregister(const string* service_id) = 0;
+        virtual int Watch(Service* service) = 0;
     };
 }
 
