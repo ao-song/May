@@ -232,7 +232,8 @@ TcpClient::Send(
 TcpClient::Action
 TcpClient::Receive(
     void* buffer,
-    size_t length)
+    const size_t& length,
+    size_t& recvlen)
 {
     ssize_t result = recv(m_socket, buffer, length, 0);
 
@@ -251,6 +252,7 @@ TcpClient::Receive(
         return RemoveConnection;
     }
 
+    recvlen = result;
     return JobDone;
 }
 

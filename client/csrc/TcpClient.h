@@ -51,7 +51,8 @@ namespace May
             size_t length);
         virtual Action Receive(
             void* buffer,
-            size_t length);
+            const size_t& length,
+            size_t& recvlen);
         virtual void Close();
 
         virtual void HandleEvent(

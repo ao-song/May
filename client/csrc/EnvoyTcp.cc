@@ -43,7 +43,13 @@ EnvoyTcp::HandleEventResult(
     if (events & EPOLLIN)
     {
         // read
-        // TcpClient::Action res = client->Receive();
+        size_t recv_bytes = 0;
+        Buffer* buff = new Buffer(BUFFER_SIZE);
+        TcpClient::Action res = client->Receive(buff, BUFFER_SIZE, recv_bytes);
+        switch (res)
+        {
+            case TcpClient::JobDone:
+        }
     }
     else if (events & EPOLLOUT)
     {

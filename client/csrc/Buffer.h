@@ -16,9 +16,14 @@ namespace May
             size_t size);
         ~Buffer();
         size_t
-        BufferSize()
+        GetSize()
         {
             return m_size;
+        }
+        unsigned char*
+        GetData()
+        {
+            return m_data;
         }
     private:
         unsigned char* m_data;
