@@ -3,6 +3,7 @@
 
 #include <string>
 #include <list>
+#include <memory>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -17,7 +18,6 @@ using namespace std;
 #define DEFAULT_CLIENT_ADDR "127.0.0.1"
 #define DEFAULT_CLIENT_PORT 8080
 #define SOCKET_NOT_SET -1
-#define BUFFER_SIZE 1024
 
 namespace May
 {

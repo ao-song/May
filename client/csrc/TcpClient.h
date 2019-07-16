@@ -3,16 +3,19 @@
 
 #include <string>
 #include <cstdint>
+#include <list>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 
 #include "EventHandler.h"
 #include "TcpClientOwner.h"
+#include "Buffer.h"
 
 using namespace std;
 
 #define SOCKET_NOT_SET -1
+#define BUFFER_SIZE 1024
 
 typedef uint32_t EVENT_TYPE;
 
@@ -50,8 +53,7 @@ namespace May
             const void* data,
             size_t length);
         virtual Action Receive(
-            void* buffer,
-            const size_t& length,
+            list<Buffer>* buffer,
             size_t& recvlen);
         virtual void Close();
 

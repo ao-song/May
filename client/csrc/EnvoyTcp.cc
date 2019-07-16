@@ -44,8 +44,7 @@ EnvoyTcp::HandleEventResult(
     {
         // read
         size_t recv_bytes = 0;
-        Buffer* buff = new Buffer(BUFFER_SIZE);
-        TcpClient::Action res = client->Receive(buff, BUFFER_SIZE, recv_bytes);
+        TcpClient::Action res = client->Receive(&m_buffer_list, recv_bytes);
         switch (res)
         {
             case TcpClient::JobDone:
