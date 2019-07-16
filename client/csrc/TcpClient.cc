@@ -234,21 +234,16 @@ TcpClient::Receive(
     list<Buffer>* buffer_list,
     size_t& recvlen)
 {
-    unsigned char* buffer = new unsigned char[BUFFER_SIZE];
-    memset(buffer, 0, BUFFER_SIZE);
+    unique_ptr<unsigned char> buffer(new unsigned char[BUFFER_SIZE]);
     recvlen = 0;
-    ssize_t result = recv(m_socket, buffer, BUFFER_SIZE, 0);
+    ssize_t result = recv(m_socket, buffer.get(), BUFFER_SIZE, 0);
 
     while (result > 0)
     {
         recvlen += result;
         buffer_list->emplace_back(buffer, result);
-        memset(buffer, 0, BUFFER_SIZE);
-        result = recv(m_socket, buffer, BUFFER_SIZE, 0);
+        result = recv(m_socket, buffer.get(), BUFFER_SIZE, 0);
     }
-
-    delete [] buffer;
-    buffer = nullptr;
 
     if (result < 0)
     {
@@ -279,22 +274,22 @@ TcpClient::HandleEvent(
 
     switch (m_state)
     {
-    case Connecting:
-    {
-        if (events & EPOLLOUT)
+        case Connecting:
         {
-            m_state = Established;
-            SetEvent(EPOLLIN);
+            if (events & EPOLLOUT)
+            {
+                m_state = Established;
+                SetEvent(EPOLLIN);
+            }
+            break;
         }
-        break;
-    }
-    case Established:
-    {
-        m_owner->HandleEventResult(this, events);
-        break;
-    }
+        case Established:
+        {
+            m_owner->HandleEventResult(this, events);
+            break;
+        }
     
-    default:
-        break;
+        default:
+            break;
     }
 }

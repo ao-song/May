@@ -47,7 +47,17 @@ EnvoyTcp::HandleEventResult(
         TcpClient::Action res = client->Receive(&m_buffer_list, recv_bytes);
         switch (res)
         {
-            case TcpClient::JobDone:
+            case TcpClient::WaitForEvent:
+            {
+                break;                
+            }
+            case TcpClient::RemoveConnection:
+            {
+                client->Close();
+                break;
+            }
+            default:
+                break;
         }
     }
     else if (events & EPOLLOUT)
