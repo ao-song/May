@@ -17,7 +17,7 @@ Service::Service(
     // empty
 }
 
-const bert_data_t*
+const bert_byte_t*
 Service::GetBert()
 {
     

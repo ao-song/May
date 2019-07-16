@@ -33,7 +33,7 @@ namespace May
         const vector<string>
         GetTags();
 
-        const bert_data_t*
+        const bert_byte_t*
         GetBert();
 
     private:
@@ -42,7 +42,7 @@ namespace May
         string m_address;
         int m_port;
         vector<string> m_tags;
-        bert_data_t* m_bert;
+        bert_byte_t* m_bert;
     };
 
     inline
