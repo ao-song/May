@@ -14,11 +14,34 @@ Service::Service(
     m_port(port),
     m_tags(tags)
 {
-    // empty
+    m_json["id"] = id;
+    m_json["name"] = name;
+    m_json["address"] = address;
+    m_json["port"] = port;
+    m_json["tags"] = json::parse(tags);
 }
 
-const bert_byte_t*
-Service::GetBert()
+Service::Service(vector<uint8_t> bson)
 {
+    m_json = json::from_bson(bson);
+
+    m_id = m_json["id"];
+    m_address = m_json["address"];
+    m_port = m_json["port"];
+    m_name = m_json["name"];
     
+    if (m_json["tags"].is_array())
+    {
+        m_tags.clear();
+        for (auto i : m_json["tags"])
+        {
+            m_tags.emplace_back(i);
+        }
+    }
+}
+
+vector<uint8_t>
+Service::GetServiceJsonBinary()
+{
+    return json::to_bson(m_json);
 }

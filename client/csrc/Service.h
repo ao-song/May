@@ -4,9 +4,10 @@
 #include <string>
 #include <vector>
 
-#include "bert.h"
+#include "json.hpp"
 
 using namespace std;
+using namespace nlohmann;
 
 namespace May
 {
@@ -20,6 +21,7 @@ namespace May
             const string& address,
             const int& port,
             const vector<string>& tags);
+        Service(vector<uint8_t> bson);
         ~Service();
 
         const string
@@ -33,8 +35,8 @@ namespace May
         const vector<string>
         GetTags();
 
-        const bert_byte_t*
-        GetBert();
+        vector<uint8_t>
+        GetServiceJsonBinary();
 
     private:
         string m_id;
@@ -42,13 +44,13 @@ namespace May
         string m_address;
         int m_port;
         vector<string> m_tags;
-        bert_byte_t* m_bert;
+        json m_json;
     };
 
     inline
     Service::Service()
     {
-        m_bert = nullptr;
+        // empty
     }
 
     inline
