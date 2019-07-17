@@ -14,7 +14,6 @@ namespace May
     class Service
     {
     public:
-        Service();
         Service(
             const string& id,
             const string& name,
@@ -46,12 +45,6 @@ namespace May
         vector<string> m_tags;
         json m_json;
     };
-
-    inline
-    Service::Service()
-    {
-        // empty
-    }
 
     inline
     Service::~Service()
