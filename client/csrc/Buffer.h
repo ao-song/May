@@ -2,6 +2,8 @@
 #define BUFFER_H
 
 #include <cstring>
+#include <vector>
+#include <cstdint>
 
 using namespace std;
 
@@ -14,6 +16,7 @@ namespace May
         Buffer(
             unsigned char* data,
             size_t size);
+        Buffer(vector<uint8_t> bin);
         ~Buffer();
         size_t
         GetSize()
