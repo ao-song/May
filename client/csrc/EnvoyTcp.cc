@@ -65,3 +65,12 @@ EnvoyTcp::HandleEventResult(
         // write
     }
 }
+
+int
+EnvoyTcp::Register(Service* service)
+{
+    vector<uint8_t> bin_vec = service->GetServiceJsonBinary();
+
+    size_t len = bin_vec.size();
+    
+}
