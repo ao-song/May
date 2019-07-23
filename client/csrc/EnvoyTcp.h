@@ -48,7 +48,7 @@ namespace May
         int m_port;
         list<Buffer> m_buffer_list;
         EventHandlerTable* m_table;
-        unique_ptr<EventHandler> m_tcp_client;
+        unique_ptr<TcpClient> m_tcp_client;
     };
 }
 

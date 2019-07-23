@@ -14,11 +14,13 @@ EnvoyTcp::EnvoyTcp(EventHandlerTable* table)
   m_port(DEFAULT_CLIENT_PORT),
   m_table(table)
 {
-    m_tcp_client = make_unique<EventHandler>(new TcpClient(
+    m_tcp_client = make_unique<TcpClient>(new TcpClient(
         DEFAULT_CLIENT_ADDR,
         DEFAULT_CLIENT_PORT,
         table,
         this));
+
+    m_tcp_client->Init();
 }
 
 EnvoyTcp::EnvoyTcp(
@@ -29,11 +31,13 @@ EnvoyTcp::EnvoyTcp(
     m_port(port),
     m_table(table)
 {
-    m_tcp_client = make_unique<EventHandler>(new TcpClient(
+    m_tcp_client = make_unique<TcpClient>(new TcpClient(
         DEFAULT_CLIENT_ADDR,
         DEFAULT_CLIENT_PORT,
         table,
         this));
+
+    m_tcp_client->Init();
 }
 
 EnvoyTcp::~EnvoyTcp()
@@ -83,5 +87,7 @@ EnvoyTcp::Register(Service* service)
 {
     vector<uint8_t> bin_vec = service->GetServiceJsonBinary();
     Buffer buff(bin_vec);
-    size_t len = buff.GetSize();        
+    size_t len = buff.GetSize();
+
+    m_tcp_client->Send(buff.GetData(), len);        
 }
