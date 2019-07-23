@@ -2,7 +2,6 @@
 #define ENVOY_H
 
 #include "Service.h"
-#include "EventHandlerTable.h"
 
 namespace May
 {
@@ -10,7 +9,6 @@ namespace May
     {
     public:
         Envoy(){}
-        Envoy(EventHandlerTable* table){}
                   
         virtual ~Envoy()
         {
