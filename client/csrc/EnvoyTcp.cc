@@ -9,19 +9,31 @@
 using namespace std;
 using namespace May;
 
-EnvoyTcp::EnvoyTcp() : m_addr_str(DEFAULT_CLIENT_ADDR),
-                       m_port(DEFAULT_CLIENT_PORT)
+EnvoyTcp::EnvoyTcp(EventHandlerTable* table)
+: m_addr_str(DEFAULT_CLIENT_ADDR),
+  m_port(DEFAULT_CLIENT_PORT),
+  m_table(table)
 {
-    // empty
+    m_tcp_client = make_unique<EventHandler>(new TcpClient(
+        DEFAULT_CLIENT_ADDR,
+        DEFAULT_CLIENT_PORT,
+        table,
+        this));
 }
 
 EnvoyTcp::EnvoyTcp(
     string addr,
-    int port)
+    int port,
+    EventHandlerTable* table)
 :   m_addr_str(addr),
-    m_port(port)
+    m_port(port),
+    m_table(table)
 {
-    // empty
+    m_tcp_client = make_unique<EventHandler>(new TcpClient(
+        DEFAULT_CLIENT_ADDR,
+        DEFAULT_CLIENT_PORT,
+        table,
+        this));
 }
 
 EnvoyTcp::~EnvoyTcp()

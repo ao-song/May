@@ -24,10 +24,11 @@ namespace May
     class EnvoyTcp: public Envoy, public TcpClientOwner
     {
     public:
-        EnvoyTcp();
+        EnvoyTcp(EventHandlerTable* table);
         EnvoyTcp(
             string addr,
-            int port);                  
+            int port,
+            EventHandlerTable* table);                  
         ~EnvoyTcp();
 
         int Register(Service* service);
@@ -46,6 +47,8 @@ namespace May
         string m_addr_str;
         int m_port;
         list<Buffer> m_buffer_list;
+        EventHandlerTable* m_table;
+        unique_ptr<EventHandler> m_tcp_client;
     };
 }
 
