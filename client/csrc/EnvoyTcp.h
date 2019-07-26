@@ -32,7 +32,7 @@ namespace May
         ~EnvoyTcp();
 
         int Register(Service* service);
-        int Deregister(const string* service_id);
+        int Deregister(string* service_id);
         int Watch(Service* service);
 
         virtual

@@ -14,6 +14,7 @@ namespace May
     class Service
     {
     public:
+        Service();
         Service(
             const string& id,
             const string& name,
@@ -34,6 +35,9 @@ namespace May
         const vector<string>
         GetTags();
 
+        void
+        SetValue(string key, string value);
+
         vector<uint8_t>
         GetServiceJsonBinary();
 
@@ -45,6 +49,12 @@ namespace May
         vector<string> m_tags;
         json m_json;
     };
+
+    inline
+    Service::Service()
+    {
+        // empty
+    }
 
     inline
     Service::~Service()

@@ -85,6 +85,21 @@ EnvoyTcp::HandleEventResult(
 int
 EnvoyTcp::Register(Service* service)
 {
+    service->SetValue("action", "REG");
+    vector<uint8_t> bin_vec = service->GetServiceJsonBinary();
+    Buffer buff(bin_vec);
+    size_t len = buff.GetSize();
+
+    m_tcp_client->Send(buff.GetData(), len);        
+}
+
+int
+EnvoyTcp::Deregister(string* service_id)
+{
+    unique_ptr<Service> service = make_unique<Service>(new Service);
+    service->SetValue("action", "DEREG");
+    service->SetValue("id", *service_id);
+    
     vector<uint8_t> bin_vec = service->GetServiceJsonBinary();
     Buffer buff(bin_vec);
     size_t len = buff.GetSize();

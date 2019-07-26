@@ -40,6 +40,13 @@ Service::Service(vector<uint8_t> bson)
     }
 }
 
+void
+Service::SetValue(string key, string value)
+{
+    const char* key_str = key.c_str();
+    m_json[key_str] = value.c_str();
+}
+
 vector<uint8_t>
 Service::GetServiceJsonBinary()
 {
