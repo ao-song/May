@@ -52,6 +52,12 @@ EnvoyTcp::HandleEventErr(TcpClient* client)
 }
 
 void
+EnvoyTcp::HandleReceivedData()
+{
+    
+}
+
+void
 EnvoyTcp::HandleEventResult(
     TcpClient* client,
     EventType  events)
@@ -59,12 +65,14 @@ EnvoyTcp::HandleEventResult(
     if (events & EPOLLIN)
     {
         // read
-        size_t recv_bytes = 0;
-        TcpClient::Action res = client->Receive(&m_buffer_list, recv_bytes);
+        m_recv_bytes = 0;
+        TcpClient::Action res = client->Receive(
+            &m_recv_buffer_list, m_recv_bytes);
         switch (res)
         {
             case TcpClient::WaitForEvent:
             {
+                HandleReceivedData();
                 break;                
             }
             case TcpClient::RemoveConnection:

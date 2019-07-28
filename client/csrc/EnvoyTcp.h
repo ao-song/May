@@ -42,11 +42,15 @@ namespace May
         void HandleEventResult(
             TcpClient* client,
             EventType  events);
+    
+    private:
+        void HandleReceivedData();
 
     private:
         string m_addr_str;
         int m_port;
-        list<Buffer> m_buffer_list;
+        list<Buffer> m_recv_buffer_list;
+        size_t m_recv_bytes;
         EventHandlerTable* m_table;
         unique_ptr<TcpClient> m_tcp_client;
     };
