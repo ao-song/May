@@ -68,7 +68,7 @@ EnvoyTcp::HandleReceivedData()
         bytes_left -= sz;
     }
 
-    json result_in_json = json::from_bson(data.get());
+    json result_in_json = json::parse(data.get());
 }
 
 void
@@ -146,8 +146,8 @@ EnvoyTcp::Action
 EnvoyTcp::Register(Service* service)
 {
     service->SetValue("action", "REG");
-    vector<uint8_t> bin_vec = service->GetServiceJsonBinary();
-    Buffer buff(bin_vec);
+    string service_str = service->GetService();
+    Buffer buff(service_str);
     Send(&buff);      
 }
 
@@ -158,8 +158,7 @@ EnvoyTcp::Deregister(string* service_id)
     service->SetValue("action", "DEREG");
     service->SetValue("id", *service_id);
     
-    vector<uint8_t> bin_vec = service->GetServiceJsonBinary();
-    Buffer buff(bin_vec);
-    
+    string service_str = service->GetService();
+    Buffer buff(service_str);    
     Send(&buff);       
 }

@@ -38,8 +38,11 @@ namespace May
         void
         SetValue(string key, string value);
 
+        string
+        GetService();
+
         vector<uint8_t>
-        GetServiceJsonBinary();
+        GetServiceBson();
 
     private:
         string m_id;

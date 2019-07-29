@@ -4,6 +4,7 @@
 #include <cstring>
 #include <vector>
 #include <cstdint>
+#include <string>
 
 using namespace std;
 
@@ -16,7 +17,7 @@ namespace May
         Buffer(
             unsigned char* data,
             size_t size);
-        Buffer(vector<uint8_t> bin);
+        Buffer(string& str);
         ~Buffer();
         size_t
         GetSize()

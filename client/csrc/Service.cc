@@ -47,8 +47,14 @@ Service::SetValue(string key, string value)
     m_json[key_str] = value.c_str();
 }
 
+string
+Service::GetService()
+{
+    return m_json.dump();
+}
+
 vector<uint8_t>
-Service::GetServiceJsonBinary()
+Service::GetServiceBson()
 {
     return json::to_bson(m_json);
 }

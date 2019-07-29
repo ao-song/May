@@ -20,11 +20,11 @@ Buffer::Buffer(
     memcpy(m_data, data, size);
 }
 
-Buffer::Buffer(vector<uint8_t> bin)
+Buffer::Buffer(string& str)
 {
-    m_size = bin.size();
+    m_size = str.size();
     m_data = new unsigned char[m_size];
-    copy(bin.begin(), bin.end(), m_data);
+    memcpy(m_data, str.c_str(), m_size);
 }
 
 Buffer::~Buffer()
