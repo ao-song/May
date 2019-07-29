@@ -54,7 +54,21 @@ EnvoyTcp::HandleEventErr(TcpClient* client)
 void
 EnvoyTcp::HandleReceivedData()
 {
-    // todo
+    unique_ptr<unsigned char> data =
+        make_unique<unsigned char>(new unsigned char[m_recv_bytes]);
+    
+    size_t bytes_left = m_recv_bytes;
+    size_t position = 0;
+
+    for (auto i : m_recv_buffer)
+    {
+        size_t sz = (bytes_left > i.GetSize()) ? i.GetSize() : bytes_left;
+        memcpy(data.get() + position, i.GetData(), sz);
+        position += sz;
+        bytes_left -= sz;
+    }
+
+    json result_in_json = json::from_bson(data.get());
 }
 
 void
