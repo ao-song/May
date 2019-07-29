@@ -279,7 +279,7 @@ TcpClient::HandleEvent(
             if (events & EPOLLOUT)
             {
                 m_state = Established;
-                SetEvent(EPOLLIN);
+                SetEvent(EPOLLIN | EPOLLOUT);
             }
             break;
         }

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <list>
+#include <deque>
 #include <memory>
 
 #include <sys/socket.h>
@@ -29,11 +30,11 @@ namespace May
             string addr,
             int port,
             EventHandlerTable* table);                  
-        ~EnvoyTcp();
+        ~EnvoyTcp();        
 
-        int Register(Service* service);
-        int Deregister(string* service_id);
-        int Watch(Service* service);
+        Action Register(Service* service);
+        Action Deregister(string* service_id);
+        Action Watch(Service* service);
 
         virtual
         void HandleEventErr(TcpClient* client);
@@ -45,11 +46,13 @@ namespace May
     
     private:
         void HandleReceivedData();
+        Action Send(Buffer* buff);
 
     private:
         string m_addr_str;
         int m_port;
-        list<Buffer> m_recv_buffer_list;
+        list<Buffer> m_recv_buffer;
+        deque<Buffer> m_send_buffer;
         size_t m_recv_bytes;
         EventHandlerTable* m_table;
         unique_ptr<TcpClient> m_tcp_client;

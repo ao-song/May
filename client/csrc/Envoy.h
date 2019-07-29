@@ -15,9 +15,16 @@ namespace May
             // empty
         }
 
-        virtual int Register(Service* service) = 0;
-        virtual int Deregister(const string* service_id) = 0;
-        virtual int Watch(Service* service) = 0;
+        typedef enum
+        {
+            DoItLater,
+            RemoveConnection,
+            JobDone
+        } Action;
+
+        virtual Action Register(Service* service) = 0;
+        virtual Action Deregister(const string* service_id) = 0;
+        virtual Action Watch(Service* service) = 0;
     };
 }
 

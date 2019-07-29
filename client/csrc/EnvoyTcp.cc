@@ -54,7 +54,7 @@ EnvoyTcp::HandleEventErr(TcpClient* client)
 void
 EnvoyTcp::HandleReceivedData()
 {
-    
+    // todo
 }
 
 void
@@ -65,9 +65,14 @@ EnvoyTcp::HandleEventResult(
     if (events & EPOLLIN)
     {
         // read
+        if (!m_recv_buffer.empty())
+        {
+            m_recv_buffer.clear();
+        }        
         m_recv_bytes = 0;
+
         TcpClient::Action res = client->Receive(
-            &m_recv_buffer_list, m_recv_bytes);
+            &m_recv_buffer, m_recv_bytes);
         switch (res)
         {
             case TcpClient::WaitForEvent:
@@ -87,21 +92,52 @@ EnvoyTcp::HandleEventResult(
     else if (events & EPOLLOUT)
     {
         // write
+        if (!m_send_buffer.empty())
+        {
+            // resend buffered data
+            for (auto b : m_send_buffer)
+            {
+                Send(&b);
+                m_send_buffer.pop_front();
+            }
+        }
     }
 }
 
-int
+EnvoyTcp::Action
+EnvoyTcp::Send(Buffer* buff)
+{
+    switch (m_tcp_client->Send(buff->GetData(), buff->GetSize))
+    {
+        case TcpClient::CallAgain: case TcpClient::WaitForEvent:
+        {
+            m_send_buffer.push_back(*buff);
+            return DoItLater;
+        }
+        case TcpClient::RemoveConnection:
+        {
+            m_tcp_client->Close();
+            return RemoveConnection;
+        }
+        case TcpClient::JobDone:
+        {
+            return JobDone;
+        }
+        default:
+            return JobDone;            
+    }
+}
+
+EnvoyTcp::Action
 EnvoyTcp::Register(Service* service)
 {
     service->SetValue("action", "REG");
     vector<uint8_t> bin_vec = service->GetServiceJsonBinary();
     Buffer buff(bin_vec);
-    size_t len = buff.GetSize();
-
-    m_tcp_client->Send(buff.GetData(), len);        
+    Send(&buff);      
 }
 
-int
+EnvoyTcp::Action
 EnvoyTcp::Deregister(string* service_id)
 {
     unique_ptr<Service> service = make_unique<Service>(new Service);
@@ -110,7 +146,6 @@ EnvoyTcp::Deregister(string* service_id)
     
     vector<uint8_t> bin_vec = service->GetServiceJsonBinary();
     Buffer buff(bin_vec);
-    size_t len = buff.GetSize();
-
-    m_tcp_client->Send(buff.GetData(), len);        
+    
+    Send(&buff);       
 }
