@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 2019-07-09 13:41:46.067512
 %%%-------------------------------------------------------------------
--module(receptionist_ux_sup).
+-module(receptionist_tcp_sup).
 
 -behaviour(supervisor).
 
@@ -43,7 +43,7 @@ start_link() ->
 add_receptionist(Socket) ->
     {ok, Child} = supervisor:start_child(?MODULE, []),
     ok = gen_tcp:controlling_process(Socket, Child),
-    receptionist_ux:set_socket(Child, Socket).
+    receptionist_tcp:set_socket(Child, Socket).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -73,8 +73,8 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-    AChild = {receptionist_ux, {receptionist_ux, start_link, []},
-              Restart, Shutdown, Type, [receptionist_ux]},
+    AChild = {receptionist_tcp, {receptionist_tcp, start_link, []},
+              Restart, Shutdown, Type, [receptionist_tcp]},
 
     {ok, {SupFlags, [AChild]}}.
 

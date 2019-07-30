@@ -3,13 +3,10 @@
 %%% @copyright (C) 2019, Ao Song
 %%% @doc
 %%%
-%%% Initially I was thinking using unix domain socket for IPC, but seems
-%%% not very well supported by Erlang currently, so use local IP instead.
-%%%
 %%% @end
-%%% Created : 2019-07-08 09:14:34.467708
+%%% Created : 2019-07-09 13:41:31.471236
 %%%-------------------------------------------------------------------
--module(reception_ux).
+-module(receptionist_tcp).
 
 -behaviour(gen_server).
 
@@ -17,6 +14,7 @@
 
 %% API
 -export([start_link/0]).
+-export([set_socket/2]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -28,7 +26,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {listener}).
+-record(state, {socket = null}).
 
 %%%===================================================================
 %%% API
@@ -43,6 +41,9 @@
 %%--------------------------------------------------------------------
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+set_socket(Child, Socket) when is_pid(Child), is_port(Socket) ->
+    gen_server:cast(Child, {socket_ready, Socket}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -60,21 +61,8 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    case gen_tcp:listen(?CLIENT_PORT, ?SOCK_OPTIONS) of
-        {ok, ListenSocket} ->            
-            {ok, accept(#state{listener = ListenSocket})};
-        {error, Reason} ->
-            {stop, Reason}
-    end.
-
-accept(#state{listener = ListenSocket} = State) ->
-    proc_lib:spawn(fun() -> accept_loop(ListenSocket) end),
-    State.
-
-accept_loop(ListenSocket) ->
-    {ok, Socket} = gen_tcp:accept(ListenSocket),
-    gen_server:cast(?SERVER, accepted),
-    receptionist_ux_sup:add_receptionist(Socket).
+    process_flag(trap_exit, true),
+    {ok, #state{}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -104,8 +92,9 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast(accepted, State) ->
-    {noreply, accept(State)};
+handle_cast({socket_ready, Socket}, State) ->
+    inet:setopts(Socket, ?SOCK_OPTIONS),
+    {noreply, State#state{socket = Socket}};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
