@@ -147,6 +147,7 @@ TcpClient::Init()
     }
 
     m_state = Established;
+    SetEvent(EPOLLIN | EPOLLOUT);
     return true;
 }
 
@@ -215,7 +216,6 @@ TcpClient::Send(
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
-            SetEvent(EPOLLOUT);
             return WaitForEvent;
         }
         return RemoveConnection;
@@ -238,18 +238,10 @@ TcpClient::Receive(
     recvlen = 0;
     ssize_t result = recv(m_socket, buffer.get(), BUFFER_SIZE, 0);
 
-    while (result > 0)
-    {
-        recvlen += result;
-        buffer_list->emplace_back(buffer, result);
-        result = recv(m_socket, buffer.get(), BUFFER_SIZE, 0);
-    }
-
     if (result < 0)
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
-            SetEvent(EPOLLIN);
             return WaitForEvent;
         }
         return RemoveConnection;
@@ -259,6 +251,14 @@ TcpClient::Receive(
     {
         return RemoveConnection;
     }
+
+    while (result > 0)
+    {
+        recvlen += result;
+        buffer_list->emplace_back(buffer, result);
+        result = recv(m_socket, buffer.get(), BUFFER_SIZE, 0);
+    }
+    return JobDone;
 }
 
 void

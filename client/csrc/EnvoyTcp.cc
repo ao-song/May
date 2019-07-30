@@ -89,10 +89,14 @@ EnvoyTcp::HandleEventResult(
             &m_recv_buffer, m_recv_bytes);
         switch (res)
         {
-            case TcpClient::WaitForEvent:
+            case TcpClient::JobDone:
             {
                 HandleReceivedData();
                 break;                
+            }
+            case TcpClient::WaitForEvent:
+            {
+                break;
             }
             case TcpClient::RemoveConnection:
             {
