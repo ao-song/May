@@ -1,6 +1,7 @@
 #ifndef ENVOY_H
 #define ENVOY_H
 
+#include <functional>
 #include "Service.h"
 
 namespace May
@@ -23,8 +24,17 @@ namespace May
         } Action;
 
         virtual Action Register(Service* service) = 0;
+        virtual Action Register(
+            Service* service,
+            function<void(unsigned char*)> callback) = 0;
         virtual Action Deregister(const string* service_id) = 0;
+        virtual Action Deregister(
+            string* service_id,
+            function<void(unsigned char*)> callback) = 0;
         virtual Action Watch(Service* service) = 0;
+        virtual Action Watch(
+            Service* service,
+            function<void(unsigned char*)> callback) = 0;
     };
 }
 

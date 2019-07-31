@@ -5,7 +5,6 @@
 #include <list>
 #include <deque>
 #include <memory>
-#include <functional>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
