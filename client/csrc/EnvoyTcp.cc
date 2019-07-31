@@ -47,10 +47,9 @@ EnvoyTcp::~EnvoyTcp()
 
 void 
 EnvoyTcp::SetCallback(
-    Event event,
     function<void(unsigned char*)> callback)
 {
-    m_callbacks[event] = callback;
+    m_callback = callback;
 }
 
 void
@@ -76,7 +75,7 @@ EnvoyTcp::HandleReceivedData()
         bytes_left -= sz;
     }
 
-    json result_in_json = json::parse(data.get());
+    m_callback(data.get());
 }
 
 void
@@ -159,7 +158,7 @@ EnvoyTcp::Register(
     Service* service,
     function<void(unsigned char*)> callback)
 {
-    this->SetCallback(REG, callback);
+    this->SetCallback(callback);
     Register(service);
 }
 
@@ -177,7 +176,7 @@ EnvoyTcp::Deregister(
     string* service_id,
     function<void(unsigned char*)> callback)
 {
-    this->SetCallback(DEREG, callback);
+    this->SetCallback(callback);
     Deregister(service_id);
 }
 
@@ -191,4 +190,22 @@ EnvoyTcp::Deregister(string* service_id)
     string service_str = service->GetService();
     Buffer buff(service_str);    
     Send(&buff);       
+}
+
+EnvoyTcp::Action
+EnvoyTcp::Watch(
+    Service* service,
+    function<void(unsigned char*)> callback)
+{
+    this->SetCallback(callback);
+    Register(service);
+}
+
+EnvoyTcp::Action
+EnvoyTcp::Watch(Service* service)
+{
+    service->SetValue("action", "WATCH");
+    string service_str = service->GetService();
+    Buffer buff(service_str);
+    Send(&buff);      
 }

@@ -5,7 +5,6 @@
 #include <list>
 #include <deque>
 #include <memory>
-#include <unordered_map>
 #include <functional>
 
 #include <sys/socket.h>
@@ -48,7 +47,6 @@ namespace May
             function<void(unsigned char*)> callback);
 
         void SetCallback(
-            Event event,
             function<void(unsigned char*)> callback);
 
         virtual
@@ -71,7 +69,7 @@ namespace May
         size_t m_recv_bytes;
         EventHandlerTable* m_table;
         unique_ptr<TcpClient> m_tcp_client;
-        unordered_map<Event, function<void(unsigned char*)>> m_callbacks;
+        function<void(unsigned char*)> m_callback;
     };
 }
 
