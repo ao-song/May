@@ -45,6 +45,14 @@ EnvoyTcp::~EnvoyTcp()
     // empty
 }
 
+void 
+EnvoyTcp::SetCallback(
+    Event event,
+    function<void(unsigned char*)> callback)
+{
+    m_callbacks[event] = callback;
+}
+
 void
 EnvoyTcp::HandleEventErr(TcpClient* client)
 {
@@ -147,12 +155,30 @@ EnvoyTcp::Send(Buffer* buff)
 }
 
 EnvoyTcp::Action
+EnvoyTcp::Register(
+    Service* service,
+    function<void(unsigned char*)> callback)
+{
+    this->SetCallback(REG, callback);
+    Register(service);
+}
+
+EnvoyTcp::Action
 EnvoyTcp::Register(Service* service)
 {
     service->SetValue("action", "REG");
     string service_str = service->GetService();
     Buffer buff(service_str);
     Send(&buff);      
+}
+
+EnvoyTcp::Action
+EnvoyTcp::Deregister(
+    string* service_id,
+    function<void(unsigned char*)> callback)
+{
+    this->SetCallback(DEREG, callback);
+    Deregister(service_id);
 }
 
 EnvoyTcp::Action

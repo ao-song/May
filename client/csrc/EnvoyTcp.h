@@ -5,6 +5,8 @@
 #include <list>
 #include <deque>
 #include <memory>
+#include <unordered_map>
+#include <functional>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -33,9 +35,21 @@ namespace May
         ~EnvoyTcp();        
 
         Action Register(Service* service);
-        Action Register(Service* service, void(*callback));
+        Action Register(
+            Service* service,
+            function<void(unsigned char*)> callback);
         Action Deregister(string* service_id);
+        Action Deregister(
+            string* service_id,
+            function<void(unsigned char*)> callback);
         Action Watch(Service* service);
+        Action Watch(
+            Service* service,
+            function<void(unsigned char*)> callback);
+
+        void SetCallback(
+            Event event,
+            function<void(unsigned char*)> callback);
 
         virtual
         void HandleEventErr(TcpClient* client);
@@ -57,6 +71,7 @@ namespace May
         size_t m_recv_bytes;
         EventHandlerTable* m_table;
         unique_ptr<TcpClient> m_tcp_client;
+        unordered_map<Event, function<void(unsigned char*)>> m_callbacks;
     };
 }
 

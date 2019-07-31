@@ -22,6 +22,13 @@ namespace May
             JobDone
         } Action;
 
+        typedef enum
+        {
+            REG,
+            DEREG,
+            WATCH
+        } Event;
+
         virtual Action Register(Service* service) = 0;
         virtual Action Deregister(const string* service_id) = 0;
         virtual Action Watch(Service* service) = 0;
