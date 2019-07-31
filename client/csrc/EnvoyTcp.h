@@ -33,6 +33,7 @@ namespace May
         ~EnvoyTcp();        
 
         Action Register(Service* service);
+        Action Register(Service* service, void(*callback));
         Action Deregister(string* service_id);
         Action Watch(Service* service);
 

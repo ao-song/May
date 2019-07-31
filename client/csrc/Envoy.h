@@ -18,7 +18,7 @@ namespace May
         typedef enum
         {
             DoItLater,
-            RemoveConnection,
+            ConnectionRemoved,
             JobDone
         } Action;
 

@@ -135,7 +135,7 @@ EnvoyTcp::Send(Buffer* buff)
         case TcpClient::RemoveConnection:
         {
             m_tcp_client->Close();
-            return RemoveConnection;
+            return ConnectionRemoved;
         }
         case TcpClient::JobDone:
         {
