@@ -27,6 +27,7 @@
 
 -define(SERVER, ?MODULE).
 
+% Field event should be a list or a single event?
 -record(state, {socket = null,
                 event}).
 
@@ -57,14 +58,19 @@ set_socket(Child, Socket) when is_pid(Child), is_port(Socket) ->
 handle_response(Packet) when is_binary(Packet) ->
     handle_response(binary_to_term(Packet));
 handle_response({registered, ID}) ->
-    gen_server:cast(self(), {registered, ID});
+    gen_server:cast(?MODULE, {registered, ID});
+handle_response({deregistered, ID}) ->
+    gen_server:cast(?MODULE, {deregistered, ID});
 
 
-handle_response({deregistered, _ID}) ->
-    {proceed, [{response, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_DEREGISTERED}}]};
 handle_response({got, ServiceList}) ->
     Body = service_list_to_json(ServiceList, []),
-    {proceed, [{response, {?CODE_200_OK, Body}}]};
+    gen_server:cast(?MODULE, {got, Body});
+
+
+
+
+
 %% todo, json handling in erlang httpd response? watch part should
 %% be implemented in another approach.
 handle_response({watched, ok}) ->
@@ -136,7 +142,11 @@ handle_cast({socket_ready, Socket}, State) ->
     {noreply, State#state{socket = Socket}};
 handle_cast({registered, ID}, #state{socket = Socket,
                                      event = {register, ID}} = State) ->
-    gen_tcp:send(Socket, binary_to_list(jsone:encode(JsonList))),
+    gen_tcp:send(Socket, binary_to_list(jsone:encode({registered, c2a(ID)}))),
+    {noreply, State};
+handle_cast({deregistered, ID}, #state{socket = Socket,
+                                       event = {deregister, ID}} = State) ->
+    gen_tcp:send(Socket, binary_to_list(jsone:encode({deregistered, c2a(ID)}))),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -221,18 +231,18 @@ c2l(I) when is_integer(I) -> I;
 c2l(I) when is_list(I) -> I.
 
 service_list_to_json([], JsonList) ->
-    binary_to_list(jsone:encode(JsonList));
+    jsone:encode(JsonList);
 service_list_to_json([#service{id = ID,
                                name = Name,
                                address = Address,
                                port = Port,
                                properties = Props} | ServiceList],
                      JsonList) ->
-    Service = {'Service', [{'ID', c2a(ID)},
-                           {'Service', c2a(Name)},
-                           {'Address', c2a(Address)},
-                           {'Port', c2a(Port)},
-                           {'Tags', [c2a(X) || X <- Props]}]},
+    Service = [{id, c2a(ID)},
+               {name, c2a(Name)},
+               {address, c2a(Address)},
+               {port, c2a(Port)},
+               {tags, [c2a(X) || X <- Props]}],
     service_list_to_json(ServiceList, [Service | JsonList]).
 
 
