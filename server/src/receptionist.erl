@@ -196,26 +196,21 @@ handle_request({get, #service{name = ServiceName, owner = Owner}}, State) ->
         exit:{aborted, Reason} ->
             {{exit, caught, Reason}, State}
     end;
-handle_request({watch, #service{name = ServiceName, owner = Owner}, BlockingTimeout},
+handle_request({watch, #service{name = ServiceName, properties = Tags, owner = Owner}},
                #state{watching_services = WsList} = State) ->
-    TimeStamp = erlang:system_time(second),
-    case lists:keymember(ServiceName, 1, WsList) of
-        true ->                 
-            {{watched, ok}, State#state{watching_services =
-             update_watching_list({ServiceName, TimeStamp, BlockingTimeout},
-                                  WsList)}};                                
-        false ->
-            try mnesia:dirty_match_object(#service{_ = '_',
-                                                   name = ServiceName}) of
-                ServiceList ->
-                    NewWsList =
-                        [{ServiceName, TimeStamp, BlockingTimeout} | WsList],
-                    {{watched, ServiceList, Owner},
-                     State#state{watching_services = NewWsList}}
-            catch
-                exit:{aborted, Reason} ->
-                    {{exit, caught, Reason}, State}
-            end
+    NewState = State#state{watching_services =
+        update_watching_list({ServiceName, Tags, Owner}, WsList)},
+
+    case get(update_watch) of
+        true ->
+            erase(update_watch),
+            {{watched, ok, Owner}, NewState};
+        _Other ->
+            WatchID = erlang:phash2({node(), erlang:timestamp()}),
+            NewWsList =
+                [{WatchID, ServiceName, Tags, Owner} | WsList],
+                 {{watched, ok, Owner},
+                 State#state{watching_services = NewWsList}}
     end.
 
 handle_table_event(Name, #state{socket = Socket, watching_services = WsList}) ->
@@ -242,5 +237,11 @@ notify_client({Name, TimeStamp, BlockingTimeout}, Now, Socket) ->
             noreply
     end.
 
-update_watching_list({ServiceName, _Timestamp, _Timeout} = Tuple, List) ->
-    lists:keyreplace(ServiceName, 1, List, Tuple).
+update_watching_list({ServiceName, Tags, Owner}, List) ->
+    lists:foldl(
+        fun({WatchID, ServiceNameX, _OldTags, OwnerX}, L)
+              when ServiceNameX == ServiceName andalso OwnerX == Owner ->
+            put(update_watch, true),
+            [{WatchID, ServiceName, Tags, Owner} | L];
+           (Other, L) -> [Other | L]
+        end, [], List).
