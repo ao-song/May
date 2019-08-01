@@ -171,32 +171,32 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-handle_request({register, #service{id = ID} = Service}, State) ->
+handle_request({register, #service{id = ID, owner = Owner} = Service}, State) ->
     try mnesia:dirty_write(Service) of
         ok ->
-            {{registered, ID}, State}
+            {{registered, ID, Owner}, State}
     catch
         exit:{aborted, Reason} ->
             {{exit, caught, Reason}, State}
     end;
-handle_request({deregister, ServiceId}, State) ->
+handle_request({deregister, #service{id = ServiceId, owner = Owner}}, State) ->
     try mnesia:dirty_delete({service, ServiceId}) of
         ok ->
-            {{deregistered, ServiceId}, State}
+            {{deregistered, ServiceId, Owner}, State}
     catch
         exit:{aborted, Reason} ->
             {{exit, caught, Reason}, State}
     end;
-handle_request({get, ServiceName}, State) ->
+handle_request({get, #service{name = ServiceName, owner = Owner}}, State) ->
     try mnesia:dirty_match_object(#service{_ = '_',
                                            name = ServiceName}) of
         ServiceList ->
-            {{got, ServiceList}, State}
+            {{got, ServiceList, Owner}, State}
     catch
         exit:{aborted, Reason} ->
             {{exit, caught, Reason}, State}
     end;
-handle_request({watch, ServiceName, BlockingTimeout},
+handle_request({watch, #service{name = ServiceName, owner = Owner}, BlockingTimeout},
                #state{watching_services = WsList} = State) ->
     TimeStamp = erlang:system_time(second),
     case lists:keymember(ServiceName, 1, WsList) of
@@ -210,7 +210,7 @@ handle_request({watch, ServiceName, BlockingTimeout},
                 ServiceList ->
                     NewWsList =
                         [{ServiceName, TimeStamp, BlockingTimeout} | WsList],
-                    {{watched, ServiceList},
+                    {{watched, ServiceList, Owner},
                      State#state{watching_services = NewWsList}}
             catch
                 exit:{aborted, Reason} ->

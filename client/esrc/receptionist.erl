@@ -27,9 +27,7 @@
 
 -define(SERVER, ?MODULE).
 
-% Field event should be a list or a single event?
--record(state, {socket = null,
-                event}).
+-record(state, {socket = null}).
 
 %%%===================================================================
 %%% API
@@ -57,12 +55,12 @@ set_socket(Child, Socket) when is_pid(Child), is_port(Socket) ->
 %%--------------------------------------------------------------------
 handle_response(Packet) when is_binary(Packet) ->
     handle_response(binary_to_term(Packet));
-handle_response({registered, ID}) ->
-    gen_server:cast(?MODULE, {registered, ID});
-handle_response({deregistered, ID}) ->
-    gen_server:cast(?MODULE, {deregistered, ID});
-handle_response({got, ServiceList}) ->    
-    gen_server:cast(?MODULE, {got, ServiceList});
+handle_response({registered, ID, Owner}) ->
+    gen_server:cast(Owner, {registered, ID});
+handle_response({deregistered, ID, Owner}) ->
+    gen_server:cast(Owner, {deregistered, ID});
+handle_response({got, ServiceList, Owner}) ->    
+    gen_server:cast(Owner, {got, ServiceList});
 
 
 
@@ -137,20 +135,17 @@ handle_call(_Request, _From, State) ->
 handle_cast({socket_ready, Socket}, State) ->
     inet:setopts(Socket, ?SOCK_OPTIONS),
     {noreply, State#state{socket = Socket}};
-handle_cast({registered, ID}, #state{socket = Socket,
-                                     event = {register, ID}} = State) ->
+handle_cast({registered, ID}, #state{socket = Socket} = State) ->
     gen_tcp:send(Socket, binary_to_list(jsone:encode({registered, c2a(ID)}))),
     {noreply, State};
-handle_cast({deregistered, ID}, #state{socket = Socket,
-                                       event = {deregister, ID}} = State) ->
+handle_cast({deregistered, ID}, #state{socket = Socket} = State) ->
     gen_tcp:send(Socket, binary_to_list(jsone:encode({deregistered, c2a(ID)}))),
+    {noreply, State};
+handle_cast({got, []}, #state{socket = Socket} = State) ->
+    gen_tcp:send(Socket, binary_to_list(jsone:encode({got, []}))),
     {noreply, State};
 
-% how to handle this???
-handle_cast({got, []}, #state{socket = Socket,
-                              event = {deregister, ID}} = State) ->
-    gen_tcp:send(Socket, binary_to_list(jsone:encode({deregistered, c2a(ID)}))),
-    {noreply, State};
+
 % handle_cast({got, ServiceList}, #state{socket = Socket,
 %                                       event = {deregister, ID}} = State) ->
 %    ok;
@@ -170,20 +165,10 @@ handle_cast(_Msg, State) ->
 %%--------------------------------------------------------------------
 handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
     inet:setopts(Socket, [{active, once}]),
-    Request = construct_request_msg(Bin),
-    NewState =
-    case Request of
-        {get, #service{name = Name}} ->
-            State#state{event = {get, Name}};
-        {watch, #service{name = Name, properties = Tags}} ->
-            State#state{event = {watch, {Name, Tags}}};
-        {Action, #service{id = ID}} ->
-            State#state{event = {Action, ID}};
-        _Other ->
-            State
-    end,
-    agent:send(term_to_binary(Request)),
-    {noreply, NewState};
+    {Action, Service} = construct_request_msg(Bin),
+    NewService = Service#service{owner = self()},
+    agent:send(term_to_binary({Action, NewService})),
+    {noreply, State};
 handle_info({tcp_closed, Socket}, #state{socket = Socket} = State) ->
     {stop, normal, State};
 handle_info(_Info, State) ->
