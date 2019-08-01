@@ -1,9 +1,10 @@
 # May
 
-Client/Server module
+Client/Server module for service discovery management. Ongoing project.
 
 Todo:
 -----
     - tls
-    - bert exchange via domain socket
+    - error handling
+    - logging
     - HA server

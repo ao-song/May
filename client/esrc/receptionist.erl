@@ -61,11 +61,8 @@ handle_response({registered, ID}) ->
     gen_server:cast(?MODULE, {registered, ID});
 handle_response({deregistered, ID}) ->
     gen_server:cast(?MODULE, {deregistered, ID});
-
-
-handle_response({got, ServiceList}) ->
-    Body = service_list_to_json(ServiceList, []),
-    gen_server:cast(?MODULE, {got, Body});
+handle_response({got, ServiceList}) ->    
+    gen_server:cast(?MODULE, {got, ServiceList});
 
 
 
@@ -148,6 +145,16 @@ handle_cast({deregistered, ID}, #state{socket = Socket,
                                        event = {deregister, ID}} = State) ->
     gen_tcp:send(Socket, binary_to_list(jsone:encode({deregistered, c2a(ID)}))),
     {noreply, State};
+
+% how to handle this???
+handle_cast({got, []}, #state{socket = Socket,
+                              event = {deregister, ID}} = State) ->
+    gen_tcp:send(Socket, binary_to_list(jsone:encode({deregistered, c2a(ID)}))),
+    {noreply, State};
+% handle_cast({got, ServiceList}, #state{socket = Socket,
+%                                       event = {deregister, ID}} = State) ->
+%    ok;
+% Body = service_list_to_json(ServiceList, []),
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -166,6 +173,10 @@ handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
     Request = construct_request_msg(Bin),
     NewState =
     case Request of
+        {get, #service{name = Name}} ->
+            State#state{event = {get, Name}};
+        {watch, #service{name = Name, properties = Tags}} ->
+            State#state{event = {watch, {Name, Tags}}};
         {Action, #service{id = ID}} ->
             State#state{event = {Action, ID}};
         _Other ->
@@ -210,21 +221,34 @@ construct_request_msg(Body) ->
     % todo, error handling
     ParsedBody = jsone:decode(Body),
     
-    Action =
     case c2l(maps:get(list_to_binary("action"), ParsedBody)) of
-        "REG" -> register;
-        "DEREG" -> deregister;
-        "WATCH" -> watch;
-        "GET" -> get
-    end,
-
-    {Action,
-     #service{id = c2l(maps:get(list_to_binary("id"), ParsedBody)),
-              name = c2l(maps:get(list_to_binary("name"), ParsedBody)),
-              address = c2l(maps:get(list_to_binary("address"), ParsedBody)),
-              port = c2l(maps:get(list_to_binary("port"), ParsedBody)),
-              properties =
-              [c2l(X) || X <- maps:get(list_to_binary("tags"), ParsedBody)]}}.
+        "REG" ->
+            {register, 
+             #service{id = c2l(maps:get(list_to_binary("id"), ParsedBody)),
+                      name = c2l(maps:get(list_to_binary("name"), ParsedBody)),
+                      address = c2l(maps:get(list_to_binary("address"),
+                                             ParsedBody)),
+                      port = c2l(maps:get(list_to_binary("port"), ParsedBody)),
+                      properties =
+                          [c2l(X) || X <- maps:get(list_to_binary("tags"),
+                                                   ParsedBody)]}};
+        "DEREG" ->
+            {deregister,
+             #service{id = c2l(maps:get(list_to_binary("id"), ParsedBody))}};
+        "WATCH" ->
+            {watch,
+             #service{id = c2l(maps:get(list_to_binary("id"), ParsedBody)),
+                      name = c2l(maps:get(list_to_binary("name"), ParsedBody)),
+                      address = c2l(maps:get(list_to_binary("address"),
+                                             ParsedBody)),
+                      port = c2l(maps:get(list_to_binary("port"), ParsedBody)),
+                      properties =
+                          [c2l(X) || X <- maps:get(list_to_binary("tags"),
+                                                   ParsedBody)]}};
+        "GET" ->
+            {get,
+             #service{name = c2l(maps:get(list_to_binary("name"), ParsedBody))}}
+    end.
 
 c2l(I) when is_binary(I) -> binary_to_list(I);
 c2l(I) when is_integer(I) -> I;
