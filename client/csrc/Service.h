@@ -38,6 +38,7 @@ namespace May
         void
         SetValue(string key, string value);
 
+        // Get service in json string
         string
         GetService();
 

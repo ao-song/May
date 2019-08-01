@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 2019-07-09 13:41:31.471236
 %%%-------------------------------------------------------------------
--module(receptionist_tcp).
+-module(receptionist).
 
 -behaviour(gen_server).
 
@@ -15,6 +15,7 @@
 %% API
 -export([start_link/0]).
 -export([set_socket/2]).
+-export([handle_response/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -26,7 +27,8 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {socket = null}).
+-record(state, {socket = null,
+                event}).
 
 %%%===================================================================
 %%% API
@@ -44,6 +46,43 @@ start_link() ->
 
 set_socket(Child, Socket) when is_pid(Child), is_port(Socket) ->
     gen_server:cast(Child, {socket_ready, Socket}).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Handle the response from server
+%%
+%% @spec handle_response(Response) -> ok | {error, Reason}
+%% @end
+%%--------------------------------------------------------------------
+handle_response(Packet) when is_binary(Packet) ->
+    handle_response(binary_to_term(Packet));
+handle_response({registered, ID}) ->
+    gen_server:cast(self(), {registered, ID});
+
+
+handle_response({deregistered, _ID}) ->
+    {proceed, [{response, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_DEREGISTERED}}]};
+handle_response({got, ServiceList}) ->
+    Body = service_list_to_json(ServiceList, []),
+    {proceed, [{response, {?CODE_200_OK, Body}}]};
+%% todo, json handling in erlang httpd response? watch part should
+%% be implemented in another approach.
+handle_response({watched, ok}) ->
+    {proceed, [{response, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_WATCHED}}]};
+handle_response({watched, ServiceList}) ->
+    Body = service_list_to_json(ServiceList, []),
+    {proceed, [{response, {response, [{code, ?CODE_200_OK},
+                                      {content_type, ?JSON_TYPE}],
+                           Body}}]};
+%% event should not be handled like this!
+handle_response({event, ServiceList}) ->
+    Body = service_list_to_json(ServiceList, []),
+    {proceed, [{response, {response, [{code, ?CODE_200_OK},
+                                      {content_type, ?JSON_TYPE}],
+                           Body}}]};
+handle_response({exit, caught, _Reason}) ->
+    {proceed, [{response, {?CODE_SERVER_ERROR, ?REQUEST_FAILED}}]};
+handle_response(_Response) -> ok.
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -95,6 +134,10 @@ handle_call(_Request, _From, State) ->
 handle_cast({socket_ready, Socket}, State) ->
     inet:setopts(Socket, ?SOCK_OPTIONS),
     {noreply, State#state{socket = Socket}};
+handle_cast({registered, ID}, #state{socket = Socket,
+                                     event = {register, ID}} = State) ->
+    gen_tcp:send(Socket, binary_to_list(jsone:encode(JsonList))),
+    {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -108,6 +151,20 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
+    inet:setopts(Socket, [{active, once}]),
+    Request = construct_request_msg(Bin),
+    NewState =
+    case Request of
+        {Action, #service{id = ID}} ->
+            State#state{event = {Action, ID}};
+        _Other ->
+            State
+    end,
+    agent:send(term_to_binary(Request)),
+    {noreply, NewState};
+handle_info({tcp_closed, Socket}, #state{socket = Socket} = State) ->
+    {stop, normal, State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -139,7 +196,47 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+construct_request_msg(Body) ->
+    % todo, error handling
+    ParsedBody = jsone:decode(Body),
+    
+    Action =
+    case c2l(maps:get(list_to_binary("action"), ParsedBody)) of
+        "REG" -> register;
+        "DEREG" -> deregister;
+        "WATCH" -> watch;
+        "GET" -> get
+    end,
+
+    {Action,
+     #service{id = c2l(maps:get(list_to_binary("id"), ParsedBody)),
+              name = c2l(maps:get(list_to_binary("name"), ParsedBody)),
+              address = c2l(maps:get(list_to_binary("address"), ParsedBody)),
+              port = c2l(maps:get(list_to_binary("port"), ParsedBody)),
+              properties =
+              [c2l(X) || X <- maps:get(list_to_binary("tags"), ParsedBody)]}}.
+
+c2l(I) when is_binary(I) -> binary_to_list(I);
+c2l(I) when is_integer(I) -> I;
+c2l(I) when is_list(I) -> I.
+
+service_list_to_json([], JsonList) ->
+    binary_to_list(jsone:encode(JsonList));
+service_list_to_json([#service{id = ID,
+                               name = Name,
+                               address = Address,
+                               port = Port,
+                               properties = Props} | ServiceList],
+                     JsonList) ->
+    Service = {'Service', [{'ID', c2a(ID)},
+                           {'Service', c2a(Name)},
+                           {'Address', c2a(Address)},
+                           {'Port', c2a(Port)},
+                           {'Tags', [c2a(X) || X <- Props]}]},
+    service_list_to_json(ServiceList, [Service | JsonList]).
 
 
-
+c2a(I) when is_atom(I) -> I;
+c2a(I) when is_integer(I) -> I;
+c2a(I) when is_list(I) -> list_to_atom(I).
 

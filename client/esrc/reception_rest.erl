@@ -3,7 +3,10 @@
 %%% @copyright (C) 2019, Ao Song
 %%% @doc
 %%%
+%%% Obsolete module, should only be used on test purpose.
+%%%
 %%% A simple http server handle the requests from application.
+%%% Mimic the way Consul handle REST requests, so not fully implemented.
 %%%
 %%% @end
 %%% Created : 2019-04-29 12:25:37.577465

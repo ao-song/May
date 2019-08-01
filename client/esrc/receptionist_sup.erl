@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 2019-07-09 13:41:46.067512
 %%%-------------------------------------------------------------------
--module(receptionist_tcp_sup).
+-module(receptionist_sup).
 
 -behaviour(supervisor).
 

@@ -38,7 +38,8 @@ init([]) ->
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
     {ok, {SupFlags,
-        [child(reception_rest), child(reception_ux), child(agent)]}}.
+        [child(reception_rest), child(reception),
+         child(agent), child(receptionist_sup)]}}.
 
 %%%===================================================================
 %%% Internal functions

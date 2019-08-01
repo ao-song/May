@@ -9,7 +9,7 @@
 %%% @end
 %%% Created : 2019-07-08 09:14:34.467708
 %%%-------------------------------------------------------------------
--module(reception_tcp).
+-module(reception).
 
 -behaviour(gen_server).
 
