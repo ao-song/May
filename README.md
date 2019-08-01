@@ -8,3 +8,10 @@ Todo:
     - error handling
     - logging
     - HA server
+
+Impl note:
+-----
+    - reg: id
+    - dereg: id
+    - get: name + pid
+    - watch: name + tags
