@@ -11,7 +11,7 @@
 %%% @end
 %%% Created : 2019-04-29 12:25:37.577465
 %%%-------------------------------------------------------------------
--module(reception).
+-module(reception_rest).
 
 -behaviour(gen_server).
 
