@@ -148,16 +148,16 @@ handle_cast({watched, WatchID}, #state{socket = Socket} = State) ->
 handle_cast({watching_notice, Event, Service},
             #state{socket = Socket} = State) ->
     gen_tcp:send(Socket,
-        jsone:encode([#{response=>watching_notice},
-                      #{event=>c2a(Event)},
-                      #{service=>c2a(Service)}])),
+                 jsone:encode([#{response=>watching_notice},
+                               #{event=>c2a(Event)},
+                               #{service=>c2a(Service)}])),
     {noreply, State};
 handle_cast({request_failed, Reason, Request},
             #state{socket = Socket} = State) ->
     gen_tcp:send(Socket,
-        jsone:encode([#{response=>request_failed},
-                      #{reason=>c2a(Reason)},
-                      #{request=>c2a(Request)}])),
+                 jsone:encode([#{response=>request_failed},
+                               #{reason=>c2a(Reason)},
+                               #{request=>c2a(Request)}])),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -267,4 +267,3 @@ service_list_to_json([#service{id = ID,
 c2a(I) when is_atom(I) -> I;
 c2a(I) when is_integer(I) -> I;
 c2a(I) when is_list(I) -> list_to_atom(I).
-
