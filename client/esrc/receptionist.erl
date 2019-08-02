@@ -122,33 +122,42 @@ handle_cast({socket_ready, Socket}, State) ->
     inet:setopts(Socket, ?SOCK_OPTIONS),
     {noreply, State#state{socket = Socket}};
 handle_cast({registered, ID}, #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, binary_to_list(jsone:encode({registered, c2a(ID)}))),
+    gen_tcp:send(Socket, jsone:encode([#{response=>registered},
+                                       #{id=>c2a(ID)}])),
     {noreply, State};
 handle_cast({deregistered, ID}, #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, binary_to_list(jsone:encode({deregistered, c2a(ID)}))),
+    gen_tcp:send(Socket, jsone:encode([#{response=>deregistered},
+                                       #{id=>c2a(ID)}])),
     {noreply, State};
 handle_cast({got, []}, #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, binary_to_list(jsone:encode({got, c2a([])}))),
+    gen_tcp:send(Socket, jsone:encode([#{response=>got},
+                                       #{id=>c2a([])}])),
     {noreply, State};
 handle_cast({got, ServiceList}, #state{socket = Socket} = State) ->
     Body = service_list_to_json(ServiceList, []),
     gen_tcp:send(Socket, Body),
     {noreply, State};
 handle_cast({watch_updated, WatchID}, #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, jsone:encode({watch_updated, c2a(WatchID)})),
+    gen_tcp:send(Socket, jsone:encode([#{response=>watch_updated},
+                                       #{watchID=>c2a(WatchID)}])),
     {noreply, State};
 handle_cast({watched, WatchID}, #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, jsone:encode({watched, c2a(WatchID)})),
+    gen_tcp:send(Socket, jsone:encode([#{response=>watched},
+                                       #{watchID=>c2a(WatchID)}])),
     {noreply, State};
 handle_cast({watching_notice, Event, Service},
             #state{socket = Socket} = State) ->
     gen_tcp:send(Socket,
-        jsone:encode({watching_notice, {event, c2a(Event)}, {service, c2a(Service)}})),
+        jsone:encode([#{response=>watching_notice},
+                      #{event=>c2a(Event)},
+                      #{service=>c2a(Service)}])),
     {noreply, State};
 handle_cast({request_failed, Reason, Request},
             #state{socket = Socket} = State) ->
     gen_tcp:send(Socket,
-        jsone:encode({request_failed, {reason, c2a(Reason)}, {request, c2a(Request)}})),
+        jsone:encode([#{response=>request_failed},
+                      #{reason=>c2a(Reason)},
+                      #{request=>c2a(Request)}])),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
