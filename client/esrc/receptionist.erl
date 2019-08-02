@@ -61,28 +61,12 @@ handle_response({deregistered, ID, Owner}) ->
     gen_server:cast(Owner, {deregistered, ID});
 handle_response({got, ServiceList, Owner}) ->    
     gen_server:cast(Owner, {got, ServiceList});
-
-
-
-
-
-%% todo, json handling in erlang httpd response? watch part should
-%% be implemented in another approach.
-handle_response({watched, ok}) ->
-    {proceed, [{response, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_WATCHED}}]};
-handle_response({watched, ServiceList}) ->
-    Body = service_list_to_json(ServiceList, []),
-    {proceed, [{response, {response, [{code, ?CODE_200_OK},
-                                      {content_type, ?JSON_TYPE}],
-                           Body}}]};
-%% event should not be handled like this!
-handle_response({event, ServiceList}) ->
-    Body = service_list_to_json(ServiceList, []),
-    {proceed, [{response, {response, [{code, ?CODE_200_OK},
-                                      {content_type, ?JSON_TYPE}],
-                           Body}}]};
-handle_response({exit, caught, _Reason}) ->
-    {proceed, [{response, {?CODE_SERVER_ERROR, ?REQUEST_FAILED}}]};
+handle_response({watch_updated, WatchID, Owner}) ->
+    gen_server:cast(Owner, {watch_updated, WatchID});
+handle_response({watched, WatchID, Owner}) ->
+    gen_server:cast(Owner, {watched, WatchID});
+handle_response({exit, caught, Reason, Request, Owner}) ->
+    gen_server:cast(Owner, {request_failed, Reason, Request});
 handle_response(_Response) -> ok.
 
 %%%===================================================================
@@ -142,14 +126,22 @@ handle_cast({deregistered, ID}, #state{socket = Socket} = State) ->
     gen_tcp:send(Socket, binary_to_list(jsone:encode({deregistered, c2a(ID)}))),
     {noreply, State};
 handle_cast({got, []}, #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, binary_to_list(jsone:encode({got, []}))),
+    gen_tcp:send(Socket, binary_to_list(jsone:encode({got, c2a([])}))),
     {noreply, State};
-
-
-% handle_cast({got, ServiceList}, #state{socket = Socket,
-%                                       event = {deregister, ID}} = State) ->
-%    ok;
-% Body = service_list_to_json(ServiceList, []),
+handle_cast({got, ServiceList}, #state{socket = Socket} = State) ->
+    Body = service_list_to_json(ServiceList, []),
+    gen_tcp:send(Socket, Body),
+    {noreply, State};
+handle_cast({watch_updated, WatchID}, #state{socket = Socket} = State) ->
+    gen_tcp:send(Socket, jsone:encode({watch_updated, c2a(WatchID)})),
+    {noreply, State};
+handle_cast({watched, WatchID}, #state{socket = Socket} = State) ->
+    gen_tcp:send(Socket, jsone:encode({watched, c2a(WatchID)})),
+    {noreply, State};
+handle_cast({request_failed, Reason, Request},
+            #state{socket = Socket} = State) ->
+    gen_tcp:send(Socket, jsone:encode({request_failed, c2a(Reason), c2a(Request)})),
+    {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 

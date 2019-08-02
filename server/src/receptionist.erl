@@ -177,7 +177,7 @@ handle_request({register, #service{id = ID, owner = Owner} = Service}, State) ->
             {{registered, ID, Owner}, State}
     catch
         exit:{aborted, Reason} ->
-            {{exit, caught, Reason}, State}
+            {{exit, caught, Reason, ID, Owner}, State}
     end;
 handle_request({deregister, #service{id = ServiceId, owner = Owner}}, State) ->
     try mnesia:dirty_delete({service, ServiceId}) of
@@ -185,7 +185,7 @@ handle_request({deregister, #service{id = ServiceId, owner = Owner}}, State) ->
             {{deregistered, ServiceId, Owner}, State}
     catch
         exit:{aborted, Reason} ->
-            {{exit, caught, Reason}, State}
+            {{exit, caught, Reason, ServiceId, Owner}, State}
     end;
 handle_request({get, #service{name = ServiceName, owner = Owner}}, State) ->
     try mnesia:dirty_match_object(#service{_ = '_',
@@ -194,7 +194,7 @@ handle_request({get, #service{name = ServiceName, owner = Owner}}, State) ->
             {{got, ServiceList, Owner}, State}
     catch
         exit:{aborted, Reason} ->
-            {{exit, caught, Reason}, State}
+            {{exit, caught, Reason, ServiceName, Owner}, State}
     end;
 handle_request({watch, #service{name = ServiceName, properties = Tags, owner = Owner}},
                #state{watching_services = WsList} = State) ->
@@ -202,14 +202,14 @@ handle_request({watch, #service{name = ServiceName, properties = Tags, owner = O
         update_watching_list({ServiceName, Tags, Owner}, WsList)},
 
     case get(update_watch) of
-        true ->
+        {true, WatchID} ->
             erase(update_watch),
-            {{watched, ok, Owner}, NewState};
+            {{watch_updated, WatchID, Owner}, NewState};
         _Other ->
             WatchID = erlang:phash2({node(), erlang:timestamp()}),
             NewWsList =
                 [{WatchID, ServiceName, Tags, Owner} | WsList],
-                 {{watched, ok, Owner},
+            {{watched, WatchID, Owner},
                  State#state{watching_services = NewWsList}}
     end.
 
@@ -241,7 +241,7 @@ update_watching_list({ServiceName, Tags, Owner}, List) ->
     lists:foldl(
         fun({WatchID, ServiceNameX, _OldTags, OwnerX}, L)
               when ServiceNameX == ServiceName andalso OwnerX == Owner ->
-            put(update_watch, true),
+            put(update_watch, {true, WatchID}),
             [{WatchID, ServiceName, Tags, Owner} | L];
            (Other, L) -> [Other | L]
         end, [], List).
