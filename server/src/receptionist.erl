@@ -137,13 +137,15 @@ handle_info({mnesia_table_event,
     {noreply, NewState};
 handle_info({mnesia_activity_event, {complete, ActivityId}},
             #state{db_events = Events} = State) ->
+    NewState =
     case lists:keyfind(ActivityId, 3, Events) of
         {_Action, _Event, ActivityId} = Event ->
-            handle_table_event(Event, State);
+            handle_table_event(Event, State),
+            State#state{db_events = lists:delete(Event, Events)};
         false ->
-            do_nothing
+            State
     end,
-    {noreply, State};
+    {noreply, NewState};
 handle_info({tcp_closed, Socket}, #state{socket = Socket} = State) ->
     {stop, normal, State};
 handle_info(_Info, State) ->
