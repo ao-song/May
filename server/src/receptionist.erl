@@ -29,7 +29,8 @@
 -define(SERVER, ?MODULE).
 
 -record(state, {socket = null,
-                watching_services = []}).
+                watching_services = [],
+                db_events = []}).
 
 %%%===================================================================
 %%% API
@@ -65,6 +66,7 @@ set_socket(Child, Socket) when is_pid(Child), is_port(Socket) ->
 %%--------------------------------------------------------------------
 init([]) ->
     process_flag(trap_exit, true),
+    {ok, _Node} = mnesia:subscribe(activity),
     {ok, _Node} = mnesia:subscribe({table, service, detailed}),
     {ok, #state{}}.
 
@@ -123,18 +125,22 @@ handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
             ok = gen_tcp:send(Socket, term_to_binary(Reply))
     end,
     {noreply, NewState};
-%% Table events received when watch, could be more powerful, current implementation
-%% is just a compromise with consul.
-handle_info({write, service, #service{name = Name}, _OldRecs, _ActivityId}, State) ->
-    handle_table_event(Name, State),
-    {noreply, State};
-handle_info({delete, service, #service{name = Name}, _OldRecs, _ActivityId},
-            State) ->    
-    handle_table_event(Name, State),
-    {noreply, State};
-handle_info({delete, service, {service, _Key}, [#service{name = Name} | _OldRecs], _ActivityId},
-            State) ->    
-    handle_table_event(Name, State),
+handle_info({mnesia_table_event, {write, service, _Service, _OldRecs, _ActivityId} = Event},
+            #state{db_events = Events} = State) ->
+    NewState = State#state{db_events = [Event | Events]},
+    {noreply, NewState};
+handle_info({mnesia_table_event, {delete, service, _What, _OldRecs, _ActivityId} = Event},
+            #state{db_events = Events} = State) ->  
+    NewState = State#state{db_events = [Event | Events]},
+    {noreply, NewState};
+handle_info({mnesia_activity_event, {complete, ActivityId}},
+            #state{db_events = Events} = State) ->
+    case lists:keyfind(ActivityId, 3, Events) of
+        {_Action, _Event, ActivityId} = Event ->
+            handle_table_event(Event, State);
+        false ->
+            do_nothing
+    end,
     {noreply, State};
 handle_info({tcp_closed, Socket}, #state{socket = Socket} = State) ->
     {stop, normal, State};
@@ -213,29 +219,17 @@ handle_request({watch, #service{name = ServiceName, properties = Tags, owner = O
                  State#state{watching_services = NewWsList}}
     end.
 
-handle_table_event(Name, #state{socket = Socket, watching_services = WsList}) ->
-    Now = erlang:system_time(second),
-    case lists:keyfind(Name, 1, WsList) of
-        {Name, TimeStamp, BlockingTimeout} ->
-            notify_client({Name, TimeStamp, BlockingTimeout}, Now, Socket);
-        false ->
-            do_nothing
-    end.
+handle_table_event({write, service, Service, _OldRecs, _ActivityId},
+                   #state{socket = Socket, watching_services = WsList}) ->
+    notify_watching_client(write, WsList, Service, Socket);
+handle_table_event({delete, service, _What, DeletedRecs, _ActivityId},
+                   #state{socket = Socket, watching_services = WsList}) ->
+    [notify_watching_client(deleted, WsList, X, Socket) || X <- DeletedRecs, is_record(X, service)].
 
-notify_client({Name, TimeStamp, BlockingTimeout}, Now, Socket) ->
-    case (Now - TimeStamp - BlockingTimeout) > 0 of
-        true ->
-            try mnesia:dirty_match_object(#service{_ = '_',
-                                                   name = Name}) of
-                ServiceList ->
-                    gen_tcp:send(Socket, term_to_binary({event, ServiceList}))          
-            catch
-                exit:{aborted, Reason} ->
-                    gen_tcp:send(Socket, term_to_binary({exit, caught, Reason}))
-            end;
-        false ->
-            noreply
-    end.
+notify_watching_client(Event, WatchingList, #service{name = Name, properties = Tags} = Service, Socket) ->
+    WsMatched = [X || {_WatchID, ServiceName, WatchingTags, _Owner} = X <- WatchingList,
+                      ServiceName == Name, (WatchingTags -- Tags) == []],
+    lists:map(fun() -> gen_tcp:send(Socket, term_to_binary({event, Event, Service})) end, WsMatched).
 
 update_watching_list({ServiceName, Tags, Owner}, List) ->
     lists:foldl(
