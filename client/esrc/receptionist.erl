@@ -247,11 +247,11 @@ service_list_to_json([#service{id = ID,
                                port = Port,
                                properties = Props} | ServiceList],
                      JsonList) ->
-    Service = [{id, c2a(ID)},
-               {name, c2a(Name)},
-               {address, c2a(Address)},
-               {port, c2a(Port)},
-               {tags, [c2a(X) || X <- Props]}],
+    Service = #{service => [#{id => c2a(ID)},
+                            #{name => c2a(Name)},
+                            #{address => c2a(Address)},
+                            #{port => c2a(Port)},
+                            #{tags => [c2a(X) || X <- Props]}]},
     service_list_to_json(ServiceList, [Service | JsonList]).
 
 

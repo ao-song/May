@@ -125,11 +125,13 @@ handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
             ok = gen_tcp:send(Socket, term_to_binary(Reply))
     end,
     {noreply, NewState};
-handle_info({mnesia_table_event, {write, service, _Service, _OldRecs, _ActivityId} = Event},
+handle_info({mnesia_table_event,
+             {write, service, _Service, _OldRecs, _ActivityId} = Event},
             #state{db_events = Events} = State) ->
     NewState = State#state{db_events = [Event | Events]},
     {noreply, NewState};
-handle_info({mnesia_table_event, {delete, service, _What, _OldRecs, _ActivityId} = Event},
+handle_info({mnesia_table_event,
+             {delete, service, _What, _OldRecs, _ActivityId} = Event},
             #state{db_events = Events} = State) ->  
     NewState = State#state{db_events = [Event | Events]},
     {noreply, NewState};
@@ -177,7 +179,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-handle_request({register, #service{id = ID, owner = Owner} = Service}, State) ->
+handle_request({register, #service{id = ID, owner = Owner} = Service},
+               State) ->
     try mnesia:dirty_write(Service) of
         ok ->
             {{registered, ID, Owner}, State}
@@ -185,7 +188,8 @@ handle_request({register, #service{id = ID, owner = Owner} = Service}, State) ->
         exit:{aborted, Reason} ->
             {{exit, caught, Reason, ID, Owner}, State}
     end;
-handle_request({deregister, #service{id = ServiceId, owner = Owner}}, State) ->
+handle_request({deregister, #service{id = ServiceId, owner = Owner}},
+               State) ->
     try mnesia:dirty_delete({service, ServiceId}) of
         ok ->
             {{deregistered, ServiceId, Owner}, State}
@@ -193,7 +197,8 @@ handle_request({deregister, #service{id = ServiceId, owner = Owner}}, State) ->
         exit:{aborted, Reason} ->
             {{exit, caught, Reason, ServiceId, Owner}, State}
     end;
-handle_request({get, #service{name = ServiceName, owner = Owner}}, State) ->
+handle_request({get, #service{name = ServiceName, owner = Owner}},
+               State) ->
     try mnesia:dirty_match_object(#service{_ = '_',
                                            name = ServiceName}) of
         ServiceList ->
@@ -202,7 +207,8 @@ handle_request({get, #service{name = ServiceName, owner = Owner}}, State) ->
         exit:{aborted, Reason} ->
             {{exit, caught, Reason, ServiceName, Owner}, State}
     end;
-handle_request({watch, #service{name = ServiceName, properties = Tags, owner = Owner}},
+handle_request({watch,
+               #service{name = ServiceName, properties = Tags, owner = Owner}},
                #state{watching_services = WsList} = State) ->
     NewState = State#state{watching_services =
         update_watching_list({ServiceName, Tags, Owner}, WsList)},
@@ -224,17 +230,25 @@ handle_table_event({write, service, Service, _OldRecs, _ActivityId},
     notify_watching_client(write, WsList, Service, Socket);
 handle_table_event({delete, service, _What, DeletedRecs, _ActivityId},
                    #state{socket = Socket, watching_services = WsList}) ->
-    [notify_watching_client(deleted, WsList, X, Socket) || X <- DeletedRecs, is_record(X, service)].
+    [notify_watching_client(deleted, WsList, X, Socket) ||
+     X <- DeletedRecs, is_record(X, service)].
 
-notify_watching_client(Event, WatchingList, #service{name = Name, properties = Tags} = Service, Socket) ->
-    WsMatched = [X || {_WatchID, ServiceName, WatchingTags, _Owner} = X <- WatchingList,
-                      ServiceName == Name, (WatchingTags -- Tags) == []],
+notify_watching_client(Event, WatchingList,
+                       #service{name = Name, properties = Tags} = Service,
+                       Socket) ->
+    WsMatched =
+        [X || {_WatchID, ServiceName, WatchingTags, _Owner} = X <- WatchingList,
+              ServiceName == Name, (WatchingTags -- Tags) == []],
     case WsMatched of
         [] ->
             do_nothing;
         _WatchingList ->
             lists:map(fun({_WatchID, _ServiceName, _WatchingTags, Owner}) ->
-                          gen_tcp:send(Socket, term_to_binary({watching_notice, Event, Service, Owner}))
+                          gen_tcp:send(Socket,
+                                       term_to_binary({watching_notice,
+                                                       Event,
+                                                       Service,
+                                                       Owner}))
                       end, WsMatched)
     end.
 
