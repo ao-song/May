@@ -229,7 +229,14 @@ handle_table_event({delete, service, _What, DeletedRecs, _ActivityId},
 notify_watching_client(Event, WatchingList, #service{name = Name, properties = Tags} = Service, Socket) ->
     WsMatched = [X || {_WatchID, ServiceName, WatchingTags, _Owner} = X <- WatchingList,
                       ServiceName == Name, (WatchingTags -- Tags) == []],
-    lists:map(fun() -> gen_tcp:send(Socket, term_to_binary({event, Event, Service})) end, WsMatched).
+    case WsMatched of
+        [] ->
+            do_nothing;
+        _WatchingList ->
+            lists:map(fun({_WatchID, _ServiceName, _WatchingTags, Owner}) ->
+                          gen_tcp:send(Socket, term_to_binary({watching_notice, Event, Service, Owner}))
+                      end, WsMatched)
+    end.
 
 update_watching_list({ServiceName, Tags, Owner}, List) ->
     lists:foldl(
