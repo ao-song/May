@@ -11,7 +11,6 @@ Todo:
 
 Impl note:
 -----
-    - reg: id
-    - dereg: id
-    - get: name + pid
-    - watch: name + tags
+    - watch reply handle;
+    - json libs investigation;
+    - cancel watch impl;

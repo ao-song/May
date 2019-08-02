@@ -65,6 +65,8 @@ handle_response({watch_updated, WatchID, Owner}) ->
     gen_server:cast(Owner, {watch_updated, WatchID});
 handle_response({watched, WatchID, Owner}) ->
     gen_server:cast(Owner, {watched, WatchID});
+handle_response({watching_notice, Event, Service, Owner}) ->
+    gen_server:cast(Owner, {watching_notice, Event, Service});
 handle_response({exit, caught, Reason, Request, Owner}) ->
     gen_server:cast(Owner, {request_failed, Reason, Request});
 handle_response(_Response) -> ok.
@@ -138,9 +140,15 @@ handle_cast({watch_updated, WatchID}, #state{socket = Socket} = State) ->
 handle_cast({watched, WatchID}, #state{socket = Socket} = State) ->
     gen_tcp:send(Socket, jsone:encode({watched, c2a(WatchID)})),
     {noreply, State};
+handle_cast({watching_notice, Event, Service},
+            #state{socket = Socket} = State) ->
+    gen_tcp:send(Socket,
+        jsone:encode({watching_notice, {event, c2a(Event)}, {service, c2a(Service)}})),
+    {noreply, State};
 handle_cast({request_failed, Reason, Request},
             #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, jsone:encode({request_failed, c2a(Reason), c2a(Request)})),
+    gen_tcp:send(Socket,
+        jsone:encode({request_failed, {reason, c2a(Reason)}, {request, c2a(Request)}})),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
