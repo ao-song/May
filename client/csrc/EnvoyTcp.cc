@@ -209,3 +209,24 @@ EnvoyTcp::Watch(Service* service)
     Buffer buff(service_str);
     Send(&buff);      
 }
+
+EnvoyTcp::Action 
+EnvoyTcp::CancelWatch(const string& watch_id)
+{
+    unique_ptr<Service> service = make_unique<Service>(new Service);
+    service->SetValue("action", "CANCELWATCH");
+    service->SetValue("id", watch_id);
+    
+    string service_str = service->GetService();
+    Buffer buff(service_str);    
+    Send(&buff);
+}
+
+EnvoyTcp::Action
+EnvoyTcp::CancelWatch(
+    const string& watch_id,
+    function<void(unsigned char*)> callback)
+{
+    this->SetCallback(callback);
+    CancelWatch(watch_id);
+}

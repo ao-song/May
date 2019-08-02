@@ -44,6 +44,10 @@ namespace May
         Action Watch(
             Service* service,
             function<void(unsigned char*)> callback);
+        Action CancelWatch(const string& watch_id);
+        Action CancelWatch(
+            const string& watch_id,
+            function<void(unsigned char*)> callback);
 
         void SetCallback(
             function<void(unsigned char*)> callback);

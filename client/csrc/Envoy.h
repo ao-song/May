@@ -35,6 +35,10 @@ namespace May
         virtual Action Watch(
             Service* service,
             function<void(unsigned char*)> callback) = 0;
+        virtual Action CancelWatch(const string& watch_id) = 0;
+        virtual Action CancelWatch(
+            const string& watch_id,
+            function<void(unsigned char*)> callback) = 0;
     };
 }
 

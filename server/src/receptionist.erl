@@ -223,7 +223,11 @@ handle_request({watch,
                 [{WatchID, ServiceName, Tags, Owner} | WsList],
             {{watched, WatchID, Owner},
                  State#state{watching_services = NewWsList}}
-    end.
+    end;
+handle_request({cancel_watch, #service{id = WatchID, owner = Owner}},
+               #state{watching_services = WsList} = State) ->
+    NewState = State#state{watching_services = lists:keydelete(WatchID, 1, WsList)},
+    {{watch_cancelled, WatchID, Owner}, NewState}.
 
 handle_table_event({write, service, Service, _OldRecs, _ActivityId},
                    #state{socket = Socket, watching_services = WsList}) ->
