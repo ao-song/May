@@ -6,7 +6,6 @@
 
 #include "EnvoyTcp.h"
 
-using namespace std;
 using namespace May;
 
 EnvoyTcp::EnvoyTcp(EventHandlerTable* table)

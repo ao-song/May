@@ -26,6 +26,15 @@ namespace May
     class Buffer;
     class TcpClient;
 
+    /*
+    // make_unique c++14 impl
+    template<typename T, typename... Args>
+    std::unique_ptr<T> make_unique(Args&&... args)
+    {
+        return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    }
+    */
+
     class EnvoyTcp: public Envoy, public TcpClientOwner
     {
     public:
