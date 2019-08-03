@@ -128,10 +128,10 @@ EnvoyTcp::HandleEventResult(
     }
 }
 
-EnvoyTcp::Action
+Envoy::Action
 EnvoyTcp::Send(Buffer* buff)
 {
-    switch (m_tcp_client->Send(buff->GetData(), buff->GetSize))
+    switch (m_tcp_client->Send(buff->GetData(), buff->GetSize()))
     {
         case TcpClient::CallAgain: case TcpClient::WaitForEvent:
         {
@@ -152,34 +152,34 @@ EnvoyTcp::Send(Buffer* buff)
     }
 }
 
-EnvoyTcp::Action
+Envoy::Action
 EnvoyTcp::Register(
     Service* service,
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);
-    Register(service);
+    this->Register(service);
 }
 
-EnvoyTcp::Action
+Envoy::Action
 EnvoyTcp::Register(Service* service)
 {
     service->SetValue("action", "REG");
     string service_str = service->GetService();
     Buffer buff(service_str);
-    Send(&buff);      
+    this->Send(&buff);      
 }
 
-EnvoyTcp::Action
+Envoy::Action
 EnvoyTcp::Deregister(
     string* service_id,
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);
-    Deregister(service_id);
+    this->Deregister(service_id);
 }
 
-EnvoyTcp::Action
+Envoy::Action
 EnvoyTcp::Deregister(string* service_id)
 {
     unique_ptr<Service> service = make_unique<Service>(new Service);
@@ -188,28 +188,28 @@ EnvoyTcp::Deregister(string* service_id)
     
     string service_str = service->GetService();
     Buffer buff(service_str);    
-    Send(&buff);       
+    this->Send(&buff);       
 }
 
-EnvoyTcp::Action
+Envoy::Action
 EnvoyTcp::Watch(
     Service* service,
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);
-    Register(service);
+    this->Register(service);
 }
 
-EnvoyTcp::Action
+Envoy::Action
 EnvoyTcp::Watch(Service* service)
 {
     service->SetValue("action", "WATCH");
     string service_str = service->GetService();
     Buffer buff(service_str);
-    Send(&buff);      
+    this->Send(&buff);      
 }
 
-EnvoyTcp::Action 
+Envoy::Action 
 EnvoyTcp::CancelWatch(const string& watch_id)
 {
     unique_ptr<Service> service = make_unique<Service>(new Service);
@@ -218,14 +218,14 @@ EnvoyTcp::CancelWatch(const string& watch_id)
     
     string service_str = service->GetService();
     Buffer buff(service_str);    
-    Send(&buff);
+    this->Send(&buff);
 }
 
-EnvoyTcp::Action
+Envoy::Action
 EnvoyTcp::CancelWatch(
     const string& watch_id,
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);
-    CancelWatch(watch_id);
+    this->CancelWatch(watch_id);
 }
