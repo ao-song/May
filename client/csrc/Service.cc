@@ -18,7 +18,13 @@ Service::Service(
     m_json["name"] = name;
     m_json["address"] = address;
     m_json["port"] = port;
-    m_json["tags"] = json::parse(tags);
+    
+    json tmp_array;
+    for (auto i : tags)
+    {
+        tmp_array.push_back(i);
+    }
+    m_json["tags"] = tmp_array;
 }
 
 Service::Service(vector<uint8_t> bson)

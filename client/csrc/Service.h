@@ -7,7 +7,7 @@
 #include "json.hpp"
 
 using namespace std;
-using namespace nlohmann;
+using json = nlohmann::json;
 
 namespace May
 {
