@@ -22,6 +22,8 @@ typedef uint32_t EVENT_TYPE;
 
 namespace May
 {
+    class TcpClientOwner;
+    
     class TcpClient : public EventHandler
     {
     public:

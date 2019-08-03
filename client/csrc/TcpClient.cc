@@ -255,7 +255,7 @@ TcpClient::Receive(
     while (result > 0)
     {
         recvlen += result;
-        buffer_list->emplace_back(buffer, result);
+        buffer_list->emplace_back(buffer.get(), result);
         result = recv(m_socket, buffer.get(), BUFFER_SIZE, 0);
     }
     return JobDone;

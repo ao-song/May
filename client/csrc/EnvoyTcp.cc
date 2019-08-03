@@ -13,7 +13,7 @@ EnvoyTcp::EnvoyTcp(EventHandlerTable* table)
   m_port(DEFAULT_CLIENT_PORT),
   m_table(table)
 {
-    m_tcp_client = make_unique<TcpClient>(new TcpClient(
+    m_tcp_client = unique_ptr<TcpClient>(new TcpClient(
         DEFAULT_CLIENT_ADDR,
         DEFAULT_CLIENT_PORT,
         table,
@@ -30,7 +30,7 @@ EnvoyTcp::EnvoyTcp(
     m_port(port),
     m_table(table)
 {
-    m_tcp_client = make_unique<TcpClient>(new TcpClient(
+    m_tcp_client = unique_ptr<TcpClient>(new TcpClient(
         DEFAULT_CLIENT_ADDR,
         DEFAULT_CLIENT_PORT,
         table,
@@ -61,7 +61,7 @@ void
 EnvoyTcp::HandleReceivedData()
 {
     unique_ptr<unsigned char> data =
-        make_unique<unsigned char>(new unsigned char[m_recv_bytes]);
+        unique_ptr<unsigned char>(new unsigned char[m_recv_bytes]);
     
     size_t bytes_left = m_recv_bytes;
     size_t position = 0;
@@ -182,7 +182,7 @@ EnvoyTcp::Deregister(
 Envoy::Action
 EnvoyTcp::Deregister(string* service_id)
 {
-    unique_ptr<Service> service = make_unique<Service>(new Service);
+    unique_ptr<Service> service = unique_ptr<Service>(new Service);
     service->SetValue("action", "DEREG");
     service->SetValue("id", *service_id);
     
@@ -212,7 +212,7 @@ EnvoyTcp::Watch(Service* service)
 Envoy::Action 
 EnvoyTcp::CancelWatch(const string& watch_id)
 {
-    unique_ptr<Service> service = make_unique<Service>(new Service);
+    unique_ptr<Service> service = unique_ptr<Service>(new Service);
     service->SetValue("action", "CANCELWATCH");
     service->SetValue("id", watch_id);
     
