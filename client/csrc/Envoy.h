@@ -6,6 +6,8 @@
 
 namespace May
 {
+    class Service;
+    
     class Envoy
     {
     public:

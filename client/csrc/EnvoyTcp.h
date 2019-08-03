@@ -22,6 +22,10 @@ using namespace std;
 
 namespace May
 {
+    class EventHandlerTable;
+    class Buffer;
+    class TcpClient;
+
     class EnvoyTcp: public Envoy, public TcpClientOwner
     {
     public:

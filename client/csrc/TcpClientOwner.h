@@ -5,6 +5,8 @@
 
 namespace May
 {
+    class TcpClient;
+    
     class TcpClientOwner
     {
     public:

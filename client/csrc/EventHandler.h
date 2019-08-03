@@ -7,6 +7,8 @@ typedef uint32_t EventType;
 
 namespace May
 {
+    class EventHandlerTable;
+    
     class EventHandler
     {
     public:
