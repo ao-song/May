@@ -30,7 +30,7 @@ namespace May
         GetName();
         const string
         GetAddress();
-        const int
+        int
         GetPort();
         const vector<string>
         GetTags();
@@ -88,7 +88,7 @@ namespace May
     }
 
     inline
-    const int
+    int
     Service::GetPort()
     {
         return m_port;

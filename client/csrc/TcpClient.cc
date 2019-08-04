@@ -221,7 +221,7 @@ TcpClient::Send(
         return RemoveConnection;
     }
 
-    if (result == length)
+    if (static_cast<size_t>(result) == length)
     {
         return JobDone;
     }
@@ -266,6 +266,8 @@ TcpClient::HandleEvent(
     EventType events,
     int fd)
 {
+    assert(fd == m_socket);
+
     if (events & (EPOLLHUP | EPOLLERR))
     {
         // Close();

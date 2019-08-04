@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <list>
 #include <memory>
+#include <cassert>
 
 #include <sys/socket.h>
 #include <netinet/in.h>

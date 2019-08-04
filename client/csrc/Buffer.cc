@@ -3,8 +3,8 @@
 using namespace May;
 
 Buffer::Buffer(size_t size)
-: m_size(size),
-  m_data(nullptr)
+: m_data(nullptr),
+  m_size(size)  
 {
     m_data = new unsigned char[size];
     memset(m_data, 0, size);
@@ -13,8 +13,8 @@ Buffer::Buffer(size_t size)
 Buffer::Buffer(
     unsigned char* data,
     size_t size)
-: m_size(size),
-  m_data(nullptr)
+: m_data(nullptr),
+  m_size(size) 
 {
     m_data = new unsigned char[size];
     memcpy(m_data, data, size);

@@ -1,0 +1,3 @@
+/home/ao/github/May/client/csrc/CMakeFiles/rebuild_cache.dir
+/home/ao/github/May/client/csrc/CMakeFiles/may.dir
+/home/ao/github/May/client/csrc/CMakeFiles/edit_cache.dir

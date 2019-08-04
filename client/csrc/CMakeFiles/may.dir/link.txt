@@ -1,0 +1,1 @@
+/usr/bin/g++ -fPIC  -Wall -Wextra -Werror -mcrc32 -Wno-literal-suffix  -shared -Wl,-soname,libmay.so -o libmay.so CMakeFiles/may.dir/Buffer.o CMakeFiles/may.dir/EnvoyTcp.o CMakeFiles/may.dir/EventHandler.o CMakeFiles/may.dir/EventHandlerTable.o CMakeFiles/may.dir/Service.o CMakeFiles/may.dir/TcpClient.o 
