@@ -11,9 +11,6 @@ Todo:
 
 Impl note:
 -----
-    - watch reply handle;
     - json libs investigation;
-    - cancel watch impl;
-    - warning clean
-    - cmake file write
-    - test code write
+    - test code write;
+    - get impl
