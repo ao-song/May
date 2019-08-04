@@ -148,7 +148,7 @@ EnvoyTcp::Send(Buffer* buff)
             return JobDone;
         }
         default:
-            return JobDone;            
+            return DoItLater;            
     }
 }
 
@@ -158,7 +158,8 @@ EnvoyTcp::Register(
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);
-    this->Register(service);
+    auto ret = this->Register(service);
+    return ret;
 }
 
 Envoy::Action
@@ -167,7 +168,8 @@ EnvoyTcp::Register(Service* service)
     service->SetValue("action", "REG");
     string service_str = service->GetService();
     Buffer buff(service_str);
-    this->Send(&buff);      
+    auto ret = this->Send(&buff);     
+    return ret; 
 }
 
 Envoy::Action
@@ -176,7 +178,8 @@ EnvoyTcp::Deregister(
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);
-    this->Deregister(service_id);
+    auto ret = this->Deregister(service_id);
+    return ret;
 }
 
 Envoy::Action
@@ -188,7 +191,8 @@ EnvoyTcp::Deregister(string* service_id)
     
     string service_str = service->GetService();
     Buffer buff(service_str);    
-    this->Send(&buff);       
+    auto ret = this->Send(&buff);  
+    return ret;     
 }
 
 Envoy::Action
@@ -197,7 +201,8 @@ EnvoyTcp::Watch(
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);
-    this->Register(service);
+    auto ret = this->Register(service);
+    return ret;
 }
 
 Envoy::Action
@@ -206,7 +211,8 @@ EnvoyTcp::Watch(Service* service)
     service->SetValue("action", "WATCH");
     string service_str = service->GetService();
     Buffer buff(service_str);
-    this->Send(&buff);      
+    auto ret = this->Send(&buff);   
+    return ret;   
 }
 
 Envoy::Action 
@@ -218,7 +224,8 @@ EnvoyTcp::CancelWatch(const string& watch_id)
     
     string service_str = service->GetService();
     Buffer buff(service_str);    
-    this->Send(&buff);
+    auto ret = this->Send(&buff);
+    return ret;
 }
 
 Envoy::Action
@@ -227,5 +234,6 @@ EnvoyTcp::CancelWatch(
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);
-    this->CancelWatch(watch_id);
+    auto ret = this->CancelWatch(watch_id);
+    return ret;
 }
