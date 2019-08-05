@@ -185,7 +185,7 @@ EnvoyTcp::Deregister(
 Envoy::Action
 EnvoyTcp::Deregister(string* service_id)
 {
-    unique_ptr<Service> service = unique_ptr<Service>(new Service);
+    unique_ptr<Service> service = unique_ptr<Service>(new Service());
     service->SetValue("action", "DEREG");
     service->SetValue("id", *service_id);
     
@@ -198,7 +198,7 @@ EnvoyTcp::Deregister(string* service_id)
 Envoy::Action
 EnvoyTcp::Get(string* service_name)
 {
-    unique_ptr<Service> service = unique_ptr<Service>(new Service);
+    unique_ptr<Service> service = unique_ptr<Service>(new Service());
     service->SetValue("action", "GET");
     service->SetValue("name", *service_name);
     
@@ -241,7 +241,7 @@ EnvoyTcp::Watch(Service* service)
 Envoy::Action 
 EnvoyTcp::CancelWatch(const string& watch_id)
 {
-    unique_ptr<Service> service = unique_ptr<Service>(new Service);
+    unique_ptr<Service> service = unique_ptr<Service>(new Service());
     service->SetValue("action", "CANCELWATCH");
     service->SetValue("id", watch_id);
     

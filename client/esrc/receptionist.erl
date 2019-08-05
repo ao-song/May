@@ -260,7 +260,7 @@ construct_request_msg(Body) ->
              #service{id = c2l(maps:get(list_to_binary("id"), ParsedBody))}};
         "GET" ->
             {get,
-             #service{name = c2l(maps:get(list_to_binary("name"), ParsedBody))}}
+             #service{name = c2l(maps:get(("name"), ParsedBody))}}
     end.
 
 c2l(I) when is_binary(I) -> binary_to_list(I);

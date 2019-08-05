@@ -20,7 +20,7 @@ void event_loop(May::EventHandlerTable* table)
 
 void callback(unsigned char* data)
 {
-    cout << data << endl;
+    cout << "The response is: " << data << endl;
 }
 
 int main()
@@ -33,6 +33,8 @@ int main()
     thread t(event_loop, table.get());
 
     May::Service service("id_001", "test", "127.0.0.1", 8080, {"a=1", "b=2"});
+    cout << "Service is generated: " << service.GetService() << endl;
+
     envoy->Register(&service, callback);
 
     this_thread::sleep_for(chrono::seconds(1));
