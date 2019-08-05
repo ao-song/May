@@ -73,6 +73,7 @@ accept(#state{listener = ListenSocket} = State) ->
 
 accept_loop(ListenSocket) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
+    io:format("A guest is coming! ~p~n", [Socket]),
     gen_server:cast(?SERVER, accepted),
     receptionist_tcp_sup:add_receptionist(Socket).
 

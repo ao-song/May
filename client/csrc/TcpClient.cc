@@ -6,6 +6,8 @@
 
 #include "TcpClient.h"
 
+#include <iostream> // debug use
+
 using namespace std;
 using namespace May;
 
@@ -93,8 +95,10 @@ TcpClient::MakeNonBlocking(int socket)
 bool
 TcpClient::Init()
 {
+    cout << "Init connection!" << endl;
     if (!SetInetAddr())
     {
+        cout << "Set inet addr failed!" << endl;
         // Inet address set failed.
         return false;
     }
@@ -104,6 +108,7 @@ TcpClient::Init()
                       0);
     if (m_socket == -1)
     {
+        cout << "Create socket failed!" << endl;
         // failed to create a socket.
         return false;
     }
@@ -115,6 +120,7 @@ TcpClient::Init()
                    (const char*)&flag,
                    sizeof(flag)) != 0)
     {
+        cout << "Set sockopt failed!" << endl;
         Close();
         return false;
     }
@@ -123,6 +129,7 @@ TcpClient::Init()
 
     if (!MakeNonBlocking(m_socket))
     {
+        cout << "Set nonblocking failed!" << endl;
         Close();
         return false;
     }
@@ -133,18 +140,22 @@ TcpClient::Init()
     {
         if (errno != EINPROGRESS)
         {
+            cout << "Connect failed! errno is: " << errno << endl;
             Close();
             return false;
         }
         else
         {
             // connection in progress
+            cout << "Connect in progress!" << endl;
             m_state = Connecting;
             SetEvent(EPOLLOUT);
             GetTable()->HandleEvents();            
             return true;
         }
     }
+
+    cout << "Connected!" << endl;
 
     m_state = Established;
     SetEvent(EPOLLIN | EPOLLOUT);

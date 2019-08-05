@@ -189,6 +189,7 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
+    io:format("Packat coming! ~p~n", [Bin]),
     inet:setopts(Socket, [{active, once}]),
     {Action, Service} = construct_request_msg(Bin),
     NewService = Service#service{owner = self()},
