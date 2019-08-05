@@ -53,6 +53,10 @@ namespace May
         Action Deregister(
             string* service_id,
             function<void(unsigned char*)> callback);
+        Action Get(string* service_name);
+        Action Get(
+            string* service_name,
+            function<void(unsigned char*)> callback);
         Action Watch(Service* service);
         Action Watch(
             Service* service,

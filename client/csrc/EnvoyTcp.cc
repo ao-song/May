@@ -31,8 +31,8 @@ EnvoyTcp::EnvoyTcp(
     m_table(table)
 {
     m_tcp_client = unique_ptr<TcpClient>(new TcpClient(
-        DEFAULT_CLIENT_ADDR,
-        DEFAULT_CLIENT_PORT,
+        addr,
+        port,
         table,
         this));
 
@@ -193,6 +193,29 @@ EnvoyTcp::Deregister(string* service_id)
     Buffer buff(service_str);    
     auto ret = this->Send(&buff);  
     return ret;     
+}
+
+Envoy::Action
+EnvoyTcp::Get(string* service_name)
+{
+    unique_ptr<Service> service = unique_ptr<Service>(new Service);
+    service->SetValue("action", "GET");
+    service->SetValue("name", *service_name);
+    
+    string service_str = service->GetService();
+    Buffer buff(service_str);    
+    auto ret = this->Send(&buff);  
+    return ret; 
+}
+        
+Envoy::Action
+EnvoyTcp::Get(
+    string* service_name,
+    function<void(unsigned char*)> callback)
+{
+    this->SetCallback(callback);
+    auto ret = this->Deregister(service_name);
+    return ret;
 }
 
 Envoy::Action

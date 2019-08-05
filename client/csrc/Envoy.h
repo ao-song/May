@@ -29,7 +29,7 @@ namespace May
         virtual Action Register(
             Service* service,
             function<void(unsigned char*)> callback) = 0;
-        virtual Action Deregister(const string* service_id) = 0;
+        virtual Action Deregister(string* service_id) = 0;
         virtual Action Deregister(
             string* service_id,
             function<void(unsigned char*)> callback) = 0;
