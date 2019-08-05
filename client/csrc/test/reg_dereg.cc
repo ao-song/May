@@ -7,7 +7,6 @@
 #include "EventHandlerTable.h"
 #include "EnvoyTcp.h"
 #include "Service.h"
-#include "TcpClientOwner.h"
 
 using namespace std;
 
