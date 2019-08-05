@@ -10,7 +10,15 @@ namespace May
     class TcpClientOwner
     {
     public:
-        virtual ~TcpClientOwner();
+        TcpClientOwner()
+        {
+            // empty
+        }
+
+        virtual ~TcpClientOwner()
+        {
+            // empty
+        }
 
         virtual
         void HandleEventErr(TcpClient* client) = 0;

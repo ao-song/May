@@ -1,0 +1,25 @@
+   66  cd bin/
+   67  ./consul --version
+   68  ./consul agent -dev -enable-script-checks
+   69  history
+   70  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=2"],"Address":"1.1.1.1","Port":8000,"Check":{"Args":["test","5","-gt","2","&&","exit","0","||","exit","2"],"Interval":"10s","Status":"passing"}}' http://localhost:8500/v1/agent/service/register
+   71  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=2"],"Address":"1.1.1.1","Port":8000,"Check":{"Args":["test","5","-gt","2 &&","exit","0","||","exit","2"],"Interval":"10s","Status":"passing"}}' http://localhost:8500/v1/agent/service/register
+   72  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=2"],"Address":"1.1.1.1","Port":8000,"Check":{"Args":["test","5","-gt","2","||","exit","2"],"Interval":"10s","Status":"passing"}}' http://localhost:8500/v1/agent/service/register
+   73  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=2"],"Address":"1.1.1.1","Port":8000,"Check":{"Args":["test","5","-gt","2"],"Interval":"10s","Status":"passing"}}' http://localhost:8500/v1/agent/service/register
+   74  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=2"],"Address":"1.1.1.1","Port":8000,"Check":{"Args":["test","5 -gt 2 && exit 0 || exit 2"],"Interval":"10s","Status":"passing"}}' http://localhost:8500/v1/agent/service/register
+   75  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=2"],"Address":"1.1.1.1","Port":8000,"Check":{"Args":["test","5","-gt 2 &&","exit","0","||","exit","2"],"Interval":"10s","Status":"passing"}}' http://localhost:8500/v1/agent/service/register
+   76  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=2"],"Address":"1.1.1.1","Port":8000,"Check":{"Args":["test 5 -gt 2 && exit 0 || exit 2"],"Interval":"10s","Status":"passing"}}' http://localhost:8500/v1/agent/service/register
+   77  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=2"],"Address":"1.1.1.1","Port":8000,"Check":{"Args":["test", " 5 -gt 2 && exit 0 || exit 2"],"Interval":"10s","Status":"passing"}}' http://localhost:8500/v1/agent/service/register
+   78  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=2"],"Address":"1.1.1.1","Port":8000,"Check":{"Args":["test","5","-gt","2","\&\&","exit","0","\|\|","exit","2"],"Interval":"10s","Status":"pasing"}}' http://localhost:8500/v1/agent/service/register
+   79  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=2"],"Address":"1.1.1.1","Port":8000,"Check":{"Args":["test","5","-gt","2","&&","exit","0","||","exit","2"],"Interval":"10s","Status":"passing"}}' http://localhost:8500/v1/agent/service/register
+   80  cd ../..
+  336  ls
+  337  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=2"],"Address":"1.1.1.1","Port":8001,"Check":{"Args":["test","5","-gt","2","&&","exit","0","||","exit","2"],"Interval":"10s","Status":"passing"}}' http://localhost:8301/v1/agent/service/register
+  338  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_tt","Name":"tt","Tags":["First=1","Second=3"],"Address":"1.1.1.1","Port":8001,"Check":{"Args":["test","5","-gt","2","&&","exit","0","||","exit","2"],"Interval":"10s","Status":"passing"}}' http://localhost:8301/v1/agent/service/register
+  339  curl http://localhost:8301/v1/agent/service/get/tt
+  340  curl --request PUT --data '{"ID":"5927_5927_1_38484376156554490373_ttt","Name":"tt","Tags":["First=1","Second=3"],"Address":"3.3.3.3","Port":8001,"Check":{"Args":["test","5","-gt","2","&&","exit","0","||","exit","2"],"Interval":"10s","Status":"passing"}}' http://localhost:8301/v1/agent/service/register
+  341  curl http://localhost:8301/v1/agent/service/get/tt
+  342  curl http://localhost:8301/v1/agent/service/deregister/5927_5927_1_38484376156554490373_tt
+
+
+g++ -Wall -std=c++11 -o test -pthread reg_dereg.cc -L../_build -lmay -I ../ -I ../../3pp/json/
