@@ -43,7 +43,7 @@ start_link() ->
 add_receptionist(Socket) ->
     {ok, Child} = supervisor:start_child(?MODULE, []),
     ok = gen_tcp:controlling_process(Socket, Child),
-    receptionist_tcp:set_socket(Child, Socket).
+    receptionist:set_socket(Child, Socket).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -73,8 +73,8 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-    AChild = {receptionist_tcp, {receptionist_tcp, start_link, []},
-              Restart, Shutdown, Type, [receptionist_tcp]},
+    AChild = {receptionist, {receptionist, start_link, []},
+              Restart, Shutdown, Type, [receptionist]},
 
     {ok, {SupFlags, [AChild]}}.
 

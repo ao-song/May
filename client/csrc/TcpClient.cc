@@ -60,6 +60,7 @@ TcpClient::SetInetAddr()
                   m_srv_addr_str.c_str(),
                   &(m_srv_addr_inet.addr_in4.sin_addr)) == 1)
     {
+        cout << "SetInetAddr IP is: " << m_srv_addr_str.c_str() << " Port is: " << m_srv_port << endl;
         m_ip_version = IPv4;
         m_srv_addr_inet.addr_in4.sin_family = AF_INET;
         m_srv_addr_inet.addr_in4.sin_port = htons(m_srv_port);
@@ -135,8 +136,8 @@ TcpClient::Init()
     }
 
     if (connect(m_socket,
-                &m_srv_addr_inet.addrRaw,
-                sizeof(&m_srv_addr_inet.addrRaw)) != 0)
+                &(m_srv_addr_inet.addrRaw),
+                sizeof(m_srv_addr_inet.addrRaw)) != 0)
     {
         if (errno != EINPROGRESS)
         {
