@@ -1,8 +1,10 @@
 #include <memory>
 #include <cassert>
-#include <thread>
-#include <chrono>
+// #include <thread>
+// #include <chrono>
 #include <iostream>
+
+#include "unistd.h" // for sleep
 
 #include "EventHandlerTable.h"
 #include "EnvoyTcp.h"
@@ -20,13 +22,15 @@ int main()
     unique_ptr<May::EventHandlerTable> table = unique_ptr<May::EventHandlerTable>(new May::EventHandlerTable());
     assert(table->Init() == true);
 
-    this_thread::sleep_for(chrono::seconds(1));
+    // this_thread::sleep_for(chrono::seconds(1));
+    sleep(1);
 
     table->HandleEvents();
 
     unique_ptr<May::EnvoyTcp> envoy = unique_ptr<May::EnvoyTcp>(new May::EnvoyTcp(table.get()));
 
-    this_thread::sleep_for(chrono::seconds(1));
+    // this_thread::sleep_for(chrono::seconds(1));
+    sleep(1);
 
     table->HandleEvents();
 
@@ -35,27 +39,31 @@ int main()
 
     envoy->Register(&service, callback);
 
-    this_thread::sleep_for(chrono::seconds(1));
+    // this_thread::sleep_for(chrono::seconds(1));
+    sleep(1);
 
     table->HandleEvents();
 
     string name = "test";
     envoy->Get(&name);
 
-    this_thread::sleep_for(chrono::seconds(1));
+    // this_thread::sleep_for(chrono::seconds(1));
+    sleep(1);
 
     table->HandleEvents();
 
     string id = "id_001";
     envoy->Deregister(&id);
 
-    this_thread::sleep_for(chrono::seconds(1));
+    // this_thread::sleep_for(chrono::seconds(1));
+    sleep(1);
 
     table->HandleEvents();
 
     envoy->Get(&name);
 
-    this_thread::sleep_for(chrono::seconds(1));
+    // this_thread::sleep_for(chrono::seconds(1));
+    sleep(1);
 
     table->HandleEvents();
 

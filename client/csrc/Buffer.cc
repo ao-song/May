@@ -29,7 +29,7 @@ Buffer::Buffer(string& str)
 
 Buffer::~Buffer()
 {
-    if (m_data)
+    if (m_data != nullptr)
     {
         delete [] m_data;
         m_data = nullptr;
