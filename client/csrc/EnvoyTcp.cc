@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <iostream> // debug
+
 #include "EnvoyTcp.h"
 
 using namespace May;
@@ -48,11 +50,12 @@ void
 EnvoyTcp::SetCallback(
     function<void(unsigned char*)> callback)
 {
+    cout << "Call SetCallback/1!" << endl;
     m_callback = callback;
 }
 
 void
-EnvoyTcp::HandleEventErr(TcpClient* client)
+EnvoyTcp::HandleEventErr(EventHandler* client)
 {
     client->Close();
 }
@@ -79,7 +82,7 @@ EnvoyTcp::HandleReceivedData()
 
 void
 EnvoyTcp::HandleEventResult(
-    TcpClient* client,
+    EventHandler* client,
     EventType  events)
 {
     if (events & EPOLLIN)
@@ -131,20 +134,24 @@ EnvoyTcp::HandleEventResult(
 Envoy::Action
 EnvoyTcp::Send(Buffer* buff)
 {
+    cout << "Send buffer: " << buff->GetData() << endl;
     switch (m_tcp_client->Send(buff->GetData(), buff->GetSize()))
     {
         case TcpClient::CallAgain: case TcpClient::WaitForEvent:
         {
+            cout << "Cache the buffer: " << buff->GetData() << endl;
             m_send_buffer.push_back(*buff);
             return DoItLater;
         }
         case TcpClient::RemoveConnection:
         {
+            cout << "Tcp closed, buffer: " << buff->GetData() << endl;
             m_tcp_client->Close();
             return ConnectionRemoved;
         }
         case TcpClient::JobDone:
         {
+            cout << "Buffer sent: " << buff->GetData() << endl;
             return JobDone;
         }
         default:
@@ -157,6 +164,7 @@ EnvoyTcp::Register(
     Service* service,
     function<void(unsigned char*)> callback)
 {
+    cout << "Call Register/2!" << endl;
     this->SetCallback(callback);
     auto ret = this->Register(service);
     return ret;
@@ -165,9 +173,12 @@ EnvoyTcp::Register(
 Envoy::Action
 EnvoyTcp::Register(Service* service)
 {
+    cout << "Call Register/1!" << endl;
     service->SetValue("action", "REG");
     string service_str = service->GetService();
+    
     Buffer buff(service_str);
+    cout << "Init register buffer: " << buff.GetData() << endl;
     auto ret = this->Send(&buff);     
     return ret; 
 }

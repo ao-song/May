@@ -34,15 +34,7 @@ namespace May
             Connecting,
             Established,
             Listen // not used in client
-        } State;
-
-        typedef enum
-        {
-            JobDone,
-            CallAgain,
-            WaitForEvent,
-            RemoveConnection
-        } Action;
+        } State;        
 
         TcpClient(
             string ip,

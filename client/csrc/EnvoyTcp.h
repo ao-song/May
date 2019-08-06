@@ -13,6 +13,7 @@
 #include "TcpClient.h"
 #include "TcpClientOwner.h"
 #include "Buffer.h"
+#include "EventHandler.h"
 
 using namespace std;
 
@@ -23,6 +24,7 @@ using namespace std;
 namespace May
 {
     class EventHandlerTable;
+    class EventHandler;
     class Buffer;
     class TcpClient;
 
@@ -70,11 +72,11 @@ namespace May
             function<void(unsigned char*)> callback);
 
         virtual
-        void HandleEventErr(TcpClient* client);
+        void HandleEventErr(EventHandler* client);
         // read/write event coming
         virtual
         void HandleEventResult(
-            TcpClient* client,
+            EventHandler* client,
             EventType  events);
     
     private:
@@ -88,7 +90,7 @@ namespace May
         deque<Buffer> m_send_buffer;
         size_t m_recv_bytes;
         EventHandlerTable* m_table;
-        unique_ptr<TcpClient> m_tcp_client;
+        unique_ptr<EventHandler> m_tcp_client;
         function<void(unsigned char*)> m_callback;
     };
 }

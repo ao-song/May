@@ -2,10 +2,12 @@
 #define TCPCLIENTOWNER_H
 
 #include "TcpClient.h"
+#include "EventHandler.h"
 
 namespace May
 {
     class TcpClient;
+    class EventHandler;
     
     class TcpClientOwner
     {
@@ -21,11 +23,11 @@ namespace May
         }
 
         virtual
-        void HandleEventErr(TcpClient* client) = 0;
+        void HandleEventErr(EventHandler* client) = 0;
         // read/write event coming
         virtual
         void HandleEventResult(
-            TcpClient* client,
+            EventHandler* client,
             EventType  events) = 0;
     };
 }

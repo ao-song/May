@@ -27,7 +27,8 @@ int main()
 
     table->HandleEvents();
 
-    unique_ptr<May::EnvoyTcp> envoy = unique_ptr<May::EnvoyTcp>(new May::EnvoyTcp(table.get()));
+    // unique_ptr<May::EnvoyTcp> envoy = unique_ptr<May::EnvoyTcp>(new May::EnvoyTcp(table.get()));
+    May::EnvoyTcp* envoy = new May::EnvoyTcp(table.get());
 
     // this_thread::sleep_for(chrono::seconds(1));
     sleep(1);
@@ -66,6 +67,9 @@ int main()
     sleep(1);
 
     table->HandleEvents();
+
+    if (envoy)
+        delete envoy;
 
     return 0;
 }

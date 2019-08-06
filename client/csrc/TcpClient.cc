@@ -219,6 +219,7 @@ TcpClient::Send(
 {
     if (!IsConnected() && (m_state == Connecting))
     {
+        cout << "Not connected yet!" << endl;
         return CallAgain;
     }
 
@@ -228,6 +229,7 @@ TcpClient::Send(
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
+            cout << "Socket not ready yet! Errno is: " << errno << endl;
             return WaitForEvent;
         }
         return RemoveConnection;
@@ -278,7 +280,9 @@ TcpClient::HandleEvent(
     EventType events,
     int fd)
 {
+    cout << "Assert fd == socket!" << endl;
     assert(fd == m_socket);
+    cout << "Assert success!" << endl;
 
     if (events & (EPOLLHUP | EPOLLERR))
     {
