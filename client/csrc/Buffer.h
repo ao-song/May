@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstdint>
 #include <string>
+#include <memory>
 
 using namespace std;
 
@@ -27,10 +28,10 @@ namespace May
         unsigned char*
         GetData()
         {
-            return m_data;
+            return m_data.get();
         }
     private:
-        unsigned char* m_data;
+        shared_ptr<unsigned char> m_data;
         size_t m_size;     
     };
 }

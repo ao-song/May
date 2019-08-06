@@ -3,35 +3,40 @@
 using namespace May;
 
 Buffer::Buffer(size_t size)
-: m_data(nullptr),
-  m_size(size)  
+: m_size(size)  
 {
-    m_data = new unsigned char[size];
-    memset(m_data, 0, size);
+    m_data = shared_ptr<unsigned char>(new unsigned char[size],
+        [](unsigned char* data)
+        {
+            delete[] data;
+        }); 
 }
 
 Buffer::Buffer(
     unsigned char* data,
     size_t size)
-: m_data(nullptr),
-  m_size(size) 
+: m_size(size) 
 {
-    m_data = new unsigned char[size];
-    memcpy(m_data, data, size);
+    m_data = shared_ptr<unsigned char>(new unsigned char[size],
+        [](unsigned char* data)
+        {
+            delete[] data;
+        });
+    memcpy(m_data.get(), data, size);
 }
 
 Buffer::Buffer(string& str)
 {
     m_size = str.size();
-    m_data = new unsigned char[m_size];
-    memcpy(m_data, str.c_str(), m_size);
+    m_data = shared_ptr<unsigned char>(new unsigned char[m_size],
+        [](unsigned char* data)
+        {
+            delete[] data;
+        });
+    memcpy(m_data.get(), str.c_str(), m_size);
 }
 
 Buffer::~Buffer()
 {
-    if (m_data != nullptr)
-    {
-        delete [] m_data;
-        m_data = nullptr;
-    }
+    // empty
 }

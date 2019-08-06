@@ -71,10 +71,11 @@ namespace May
 
         enum {None, IPv4, IPv6} m_ip_version;
         int m_socket;
-        struct epoll_event m_event;
+        struct epoll_event* m_event = nullptr;
         State m_state;
         bool m_flag_set_event;
         TcpClientOwner* m_owner;
+        EpollData m_epoll_data;
 
         bool
         SetInetAddr();

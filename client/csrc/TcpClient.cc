@@ -25,12 +25,18 @@ TcpClient::TcpClient(
     m_flag_set_event(false),
     m_owner(owner)
 {
-    memset(&m_event, 0, sizeof(struct epoll_event));
+    m_event = new struct epoll_event;    
+    memset(m_event, 0, sizeof(struct epoll_event));
 }
 
 TcpClient::~TcpClient()
 {
     Close();
+    if (m_event != nullptr)
+    {
+        delete m_event;
+        m_event = nullptr;
+    }
 }
 
 void
@@ -150,7 +156,7 @@ TcpClient::Init()
             // connection in progress
             cout << "Connect in progress!" << endl;
             m_state = Connecting;
-            SetEvent(EPOLLOUT);
+            SetEvent(EPOLLIN | EPOLLOUT);
             GetTable()->HandleEvents();            
             return true;
         }
@@ -167,25 +173,23 @@ void
 TcpClient::SetEvent(EVENT_TYPE events)
 {
     // always set with ET.
-    m_event.events = events | EPOLLET;
-    EpollData ed;
-    ed.fd = m_socket;
-    ed.ptr = this;
-    m_event.data.ptr = &ed;
+    m_event->events = events | EPOLLET;
+    m_epoll_data.fd = m_socket;
+    m_epoll_data.ptr = this;
+    m_event->data.ptr = &m_epoll_data;
 
     EventHandlerTable* table = GetTable();
-    cout << "Table is: " << table << endl;
 
     if (m_flag_set_event)
     {
-        cout << "Modify event! Handler is:" << ed.ptr << endl;        
-        assert(table->ModifyEvent(&m_event));
+        cout << "Modify event! Handler is:" << m_epoll_data.ptr << endl;        
+        assert(table->ModifyEvent(m_event));
         cout << "Modify event done!" << endl;
     }
     else
     {
         cout << "Add event!" << endl;
-        assert(table->AddEvent(&m_event));
+        assert(table->AddEvent(m_event));
         cout << "Add event done!" << endl;
         m_flag_set_event = true;
     }    
@@ -195,9 +199,9 @@ void
 TcpClient::ResetEvent()
 {
     EventHandlerTable* table = GetTable();
-    table->DeleteEvent(&m_event);
+    table->DeleteEvent(m_event);
 
-    memset(&m_event, 0, sizeof(struct epoll_event));
+    memset(m_event, 0, sizeof(struct epoll_event));
     m_flag_set_event = false;
 }
 
@@ -211,7 +215,6 @@ TcpClient::IsConnected()
 
     if (m_state == Connecting)
     {
-        SetEvent(EPOLLOUT);
         GetTable()->HandleEvents();
         return (m_state == Established);
     }
@@ -245,7 +248,6 @@ TcpClient::Send(
     if (static_cast<size_t>(result) == length)
     {
         cout << "Data has been fully sent!" << endl;
-        SetEvent(EPOLLIN | EPOLLOUT);
         return JobDone;
     }
 
@@ -306,7 +308,6 @@ TcpClient::HandleEvent(
             {
                 cout << "Now it is connected!" << endl;
                 m_state = Established;
-                SetEvent(EPOLLIN | EPOLLOUT);
             }
             break;
         }
