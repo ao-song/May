@@ -174,14 +174,19 @@ TcpClient::SetEvent(EVENT_TYPE events)
     m_event.data.ptr = &ed;
 
     EventHandlerTable* table = GetTable();
+    cout << "Table is: " << table << endl;
 
     if (m_flag_set_event)
-    {        
-        table->ModifyEvent(&m_event);
+    {
+        cout << "Modify event! Handler is:" << ed.ptr << endl;        
+        assert(table->ModifyEvent(&m_event));
+        cout << "Modify event done!" << endl;
     }
     else
     {
-        table->AddEvent(&m_event);
+        cout << "Add event!" << endl;
+        assert(table->AddEvent(&m_event));
+        cout << "Add event done!" << endl;
         m_flag_set_event = true;
     }    
 }
@@ -239,6 +244,8 @@ TcpClient::Send(
 
     if (static_cast<size_t>(result) == length)
     {
+        cout << "Data has been fully sent!" << endl;
+        SetEvent(EPOLLIN | EPOLLOUT);
         return JobDone;
     }
 
@@ -282,9 +289,8 @@ TcpClient::HandleEvent(
     EventType events,
     int fd)
 {
-    cout << "Assert fd == socket!" << endl;
+    cout << "Start handle event!" << endl;
     assert(fd == m_socket);
-    cout << "Assert success!" << endl;
 
     if (events & (EPOLLHUP | EPOLLERR))
     {
@@ -298,6 +304,7 @@ TcpClient::HandleEvent(
         {
             if (events & EPOLLOUT)
             {
+                cout << "Now it is connected!" << endl;
                 m_state = Established;
                 SetEvent(EPOLLIN | EPOLLOUT);
             }
@@ -305,6 +312,7 @@ TcpClient::HandleEvent(
         }
         case Established:
         {
+            cout << "Handle event, it is established!" << endl;
             m_owner->HandleEventResult(this, events);
             break;
         }

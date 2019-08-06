@@ -63,6 +63,7 @@ EnvoyTcp::HandleEventErr(EventHandler* client)
 void
 EnvoyTcp::HandleReceivedData()
 {
+    cout << "Start handle received data!" << endl;
     unique_ptr<unsigned char> data =
         unique_ptr<unsigned char>(new unsigned char[m_recv_bytes]);
     
@@ -77,6 +78,8 @@ EnvoyTcp::HandleReceivedData()
         bytes_left -= sz;
     }
 
+    cout << "Start run callback to handle received data!" << endl;
+
     m_callback(data.get());
 }
 
@@ -87,6 +90,7 @@ EnvoyTcp::HandleEventResult(
 {
     if (events & EPOLLIN)
     {
+        cout << "Data coming!" << endl;
         // read
         if (!m_recv_buffer.empty())
         {
@@ -94,8 +98,11 @@ EnvoyTcp::HandleEventResult(
         }        
         m_recv_bytes = 0;
 
+        cout << "Start receive data!" << endl;
+
         TcpClient::Action res = client->Receive(
             &m_recv_buffer, m_recv_bytes);
+        cout << "Start check receive data result!" << endl;
         switch (res)
         {
             case TcpClient::JobDone:
