@@ -12,5 +12,4 @@ Todo:
 Impl note:
 -----
     - json libs investigation;
-    - test code write;
-    - get impl
+    - event_data is union, cannot use ptr and fd together;

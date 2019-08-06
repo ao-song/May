@@ -13,6 +13,13 @@
 #define MAX_EPOLL_EVENTS 5 // currently enough..
 #define EPOLL_TIMEOUT    0
 
+typedef struct EpollData
+{
+    void* ptr;
+    int   fd;
+} EpollData;
+
+
 namespace May
 {
     class EventHandlerTable

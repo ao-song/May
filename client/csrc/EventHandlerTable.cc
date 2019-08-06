@@ -35,7 +35,7 @@ EventHandlerTable::Init()
 bool
 EventHandlerTable::AddEvent(struct epoll_event* event)
 {
-    if (epoll_ctl(m_epfd, EPOLL_CTL_ADD, event->data.fd, event) == 0)
+    if (epoll_ctl(m_epfd, EPOLL_CTL_ADD, static_cast<EpollData*>(event->data.ptr)->fd, event) == 0)
     {
         return true;
     }
@@ -48,7 +48,7 @@ EventHandlerTable::AddEvent(struct epoll_event* event)
 bool
 EventHandlerTable::ModifyEvent(struct epoll_event* event)
 {
-    if (epoll_ctl(m_epfd, EPOLL_CTL_MOD, event->data.fd, event) == 0)
+    if (epoll_ctl(m_epfd, EPOLL_CTL_MOD, static_cast<EpollData*>(event->data.ptr)->fd, event) == 0)
     {
         return true;
     }
@@ -62,7 +62,7 @@ EventHandlerTable::ModifyEvent(struct epoll_event* event)
 bool
 EventHandlerTable::DeleteEvent(struct epoll_event* event)
 {
-    if (epoll_ctl(m_epfd, EPOLL_CTL_DEL, event->data.fd, event) == 0)
+    if (epoll_ctl(m_epfd, EPOLL_CTL_DEL, static_cast<EpollData*>(event->data.ptr)->fd, event) == 0)
     {
         return true;
     }
@@ -83,8 +83,8 @@ EventHandlerTable::HandleEvents()
     for (int i = 0; i < num; ++i)
     {
         EventHandler* handler = 
-            static_cast<EventHandler*>(m_events[i].data.ptr);
-        int fd = m_events[i].data.fd;
+            static_cast<EventHandler*>(static_cast<EpollData*>(m_events[i].data.ptr)->ptr);
+        int fd = static_cast<EpollData*>(m_events[i].data.ptr)->fd;
 
         assert(handler != 0);
         handler->HandleEvent(m_events[i].events, fd);

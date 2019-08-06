@@ -168,8 +168,10 @@ TcpClient::SetEvent(EVENT_TYPE events)
 {
     // always set with ET.
     m_event.events = events | EPOLLET;
-    m_event.data.fd = m_socket;
-    m_event.data.ptr = this;
+    EpollData ed;
+    ed.fd = m_socket;
+    ed.ptr = this;
+    m_event.data.ptr = &ed;
 
     EventHandlerTable* table = GetTable();
 

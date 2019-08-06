@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include "EventHandlerTable.h" // for event data definition
 #include "EventHandler.h"
 #include "TcpClientOwner.h"
 #include "Buffer.h"
