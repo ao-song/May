@@ -230,7 +230,7 @@ EnvoyTcp::Watch(
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);
-    auto ret = this->Register(service);
+    auto ret = this->Watch(service);
     return ret;
 }
 
@@ -245,7 +245,7 @@ EnvoyTcp::Watch(Service* service)
 }
 
 Envoy::Action 
-EnvoyTcp::CancelWatch(const string& watch_id)
+EnvoyTcp::CancelWatch(const int& watch_id)
 {
     unique_ptr<Service> service = unique_ptr<Service>(new Service());
     service->SetValue("action", "CANCELWATCH");
@@ -259,7 +259,7 @@ EnvoyTcp::CancelWatch(const string& watch_id)
 
 Envoy::Action
 EnvoyTcp::CancelWatch(
-    const string& watch_id,
+    const int& watch_id,
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);

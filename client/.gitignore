@@ -16,4 +16,5 @@ logs
 _build
 .idea
 *.iml
+core
 rebar3.crashdump

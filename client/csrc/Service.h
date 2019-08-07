@@ -22,6 +22,21 @@ namespace May
             const int& port,
             const vector<string>& tags);
         Service(vector<uint8_t> bson);
+        Service& operator = (const Service &other)
+        {
+            if (&other == this)
+            {
+                return *this;
+            }
+
+            m_id = other.m_id;
+            m_name = other.m_name;
+            m_address = other.m_address;
+            m_port = other.m_port;
+            m_tags = other.m_tags;
+            m_json = other.m_json;
+            return *this;
+        }
         ~Service();
 
         const string
@@ -36,7 +51,18 @@ namespace May
         GetTags();
 
         void
-        SetValue(string key, string value);
+        SetValue(string key, int value)
+        {
+            const char* key_str = key.c_str();
+            m_json[key_str] = value;
+        }
+
+        void
+        SetValue(string key, string value)
+        {
+            const char* key_str = key.c_str();
+            m_json[key_str] = value.c_str();
+        }
 
         // Get service in json string
         string

@@ -41,7 +41,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+    gen_server:start_link(?MODULE, [], []).
 
 set_socket(Child, Socket) when is_pid(Child), is_port(Socket) ->
     gen_server:cast(Child, {socket_ready, Socket}).

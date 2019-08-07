@@ -44,7 +44,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+    gen_server:start_link(?MODULE, [], []).
 
 set_socket(Child, Socket) when is_pid(Child), is_port(Socket) ->
     gen_server:cast(Child, {socket_ready, Socket}).
@@ -132,14 +132,14 @@ handle_info({mnesia_table_event,
     {noreply, NewState};
 handle_info({mnesia_table_event,
              {delete, service, _What, _OldRecs, _ActivityId} = Event},
-            #state{db_events = Events} = State) ->  
+            #state{db_events = Events} = State) ->
     NewState = State#state{db_events = [Event | Events]},
     {noreply, NewState};
 handle_info({mnesia_activity_event, {complete, ActivityId}},
             #state{db_events = Events} = State) ->
     NewState =
-    case lists:keyfind(ActivityId, 3, Events) of
-        {_Action, _Event, ActivityId} = Event ->
+    case lists:keyfind(ActivityId, 5, Events) of
+        {_Action, service, _What, _OldRecs, ActivityId} = Event ->
             handle_table_event(Event, State),
             State#state{db_events = lists:delete(Event, Events)};
         false ->
@@ -183,7 +183,10 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 handle_request({register, #service{id = ID, owner = Owner} = Service},
                State) ->
-    try mnesia:dirty_write(Service) of
+    F = fun() ->
+        mnesia:write(Service)
+    end,    
+    try mnesia:activity(transaction, F) of
         ok ->
             {{registered, ID, Owner}, State}
     catch
@@ -192,7 +195,10 @@ handle_request({register, #service{id = ID, owner = Owner} = Service},
     end;
 handle_request({deregister, #service{id = ServiceId, owner = Owner}},
                State) ->
-    try mnesia:dirty_delete({service, ServiceId}) of
+    F = fun() ->
+        mnesia:delete({service, ServiceId})
+    end,
+    try mnesia:activity(transaction, F) of
         ok ->
             {{deregistered, ServiceId, Owner}, State}
     catch
@@ -223,8 +229,9 @@ handle_request({watch,
             WatchID = erlang:phash2({node(), erlang:timestamp()}),
             NewWsList =
                 [{WatchID, ServiceName, Tags, Owner} | WsList],
+            io:format("Fist watch: ~p~n", [NewWsList]),
             {{watched, WatchID, Owner},
-                 State#state{watching_services = NewWsList}}
+                 NewState#state{watching_services = NewWsList}}
     end;
 handle_request({cancel_watch, #service{id = WatchID, owner = Owner}},
                #state{watching_services = WsList} = State) ->
@@ -233,6 +240,7 @@ handle_request({cancel_watch, #service{id = WatchID, owner = Owner}},
 
 handle_table_event({write, service, Service, _OldRecs, _ActivityId},
                    #state{socket = Socket, watching_services = WsList}) ->
+    io:format("Table event coming, ~p~n", [Service]),
     notify_watching_client(write, WsList, Service, Socket);
 handle_table_event({delete, service, _What, DeletedRecs, _ActivityId},
                    #state{socket = Socket, watching_services = WsList}) ->
@@ -242,9 +250,11 @@ handle_table_event({delete, service, _What, DeletedRecs, _ActivityId},
 notify_watching_client(Event, WatchingList,
                        #service{name = Name, properties = Tags} = Service,
                        Socket) ->
+    
     WsMatched =
         [X || {_WatchID, ServiceName, WatchingTags, _Owner} = X <- WatchingList,
               ServiceName == Name, (WatchingTags -- Tags) == []],
+    io:format("Watching list is: ~p, Watching clients: ~p~n", [WatchingList, WsMatched]),
     case WsMatched of
         [] ->
             do_nothing;
