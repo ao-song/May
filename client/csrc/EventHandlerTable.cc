@@ -50,7 +50,6 @@ EventHandlerTable::AddEvent(struct epoll_event* event)
 bool
 EventHandlerTable::ModifyEvent(struct epoll_event* event)
 {
-    cout << "Pointer after modify event: " << static_cast<EpollData*>(event->data.ptr)->ptr << endl;
     if (epoll_ctl(m_epfd, EPOLL_CTL_MOD, static_cast<EpollData*>(event->data.ptr)->fd, event) == 0)
     {
         return true;
@@ -90,8 +89,6 @@ EventHandlerTable::HandleEvents()
         int fd = static_cast<EpollData*>(m_events[i].data.ptr)->fd;
 
         assert(handler != 0);
-
-        cout << "Handler is: " << handler << endl;
 
         handler->HandleEvent(m_events[i].events, fd);
     }   

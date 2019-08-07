@@ -132,8 +132,7 @@ handle_cast({deregistered, ID}, #state{socket = Socket} = State) ->
                                        #{id=>c2a(ID)}])),
     {noreply, State};
 handle_cast({got, []}, #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, jsone:encode([#{response=>got},
-                                       #{id=>c2a([])}])),
+    gen_tcp:send(Socket, jsone:encode([#{response=>got}, []])),
     {noreply, State};
 handle_cast({got, ServiceList}, #state{socket = Socket} = State) ->
     Body = service_list_to_json(ServiceList, []),
@@ -269,7 +268,7 @@ c2l(I) when is_integer(I) -> I;
 c2l(I) when is_list(I) -> I.
 
 service_list_to_json([], JsonList) ->
-    jsone:encode(JsonList);
+    jsone:encode([#{response => got} | JsonList]);
 service_list_to_json([#service{id = ID,
                                name = Name,
                                address = Address,

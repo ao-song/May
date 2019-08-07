@@ -181,16 +181,12 @@ TcpClient::SetEvent(EVENT_TYPE events)
     EventHandlerTable* table = GetTable();
 
     if (m_flag_set_event)
-    {
-        cout << "Modify event! Handler is:" << m_epoll_data.ptr << endl;        
+    {      
         assert(table->ModifyEvent(m_event));
-        cout << "Modify event done!" << endl;
     }
     else
     {
-        cout << "Add event!" << endl;
         assert(table->AddEvent(m_event));
-        cout << "Add event done!" << endl;
         m_flag_set_event = true;
     }    
 }
@@ -291,7 +287,6 @@ TcpClient::HandleEvent(
     EventType events,
     int fd)
 {
-    cout << "Start handle event!" << endl;
     assert(fd == m_socket);
 
     if (events & (EPOLLHUP | EPOLLERR))
@@ -313,7 +308,6 @@ TcpClient::HandleEvent(
         }
         case Established:
         {
-            cout << "Handle event, it is established!" << endl;
             m_owner->HandleEventResult(this, events);
             break;
         }

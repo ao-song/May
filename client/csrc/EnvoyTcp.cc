@@ -50,7 +50,6 @@ void
 EnvoyTcp::SetCallback(
     function<void(unsigned char*)> callback)
 {
-    cout << "Call SetCallback/1!" << endl;
     m_callback = callback;
 }
 
@@ -63,7 +62,6 @@ EnvoyTcp::HandleEventErr(EventHandler* client)
 void
 EnvoyTcp::HandleReceivedData()
 {
-    cout << "Start handle received data!" << endl;
     unique_ptr<unsigned char> data =
         unique_ptr<unsigned char>(new unsigned char[m_recv_bytes]);
     
@@ -78,8 +76,6 @@ EnvoyTcp::HandleReceivedData()
         bytes_left -= sz;
     }
 
-    cout << "Start run callback to handle received data!" << endl;
-
     m_callback(data.get());
 }
 
@@ -90,7 +86,6 @@ EnvoyTcp::HandleEventResult(
 {
     if (events & EPOLLIN)
     {
-        cout << "Data coming!" << endl;
         // read
         if (!m_recv_buffer.empty())
         {
@@ -98,11 +93,8 @@ EnvoyTcp::HandleEventResult(
         }        
         m_recv_bytes = 0;
 
-        cout << "Start receive data!" << endl;
-
         TcpClient::Action res = client->Receive(
             &m_recv_buffer, m_recv_bytes);
-        cout << "Start check receive data result!" << endl;
         switch (res)
         {
             case TcpClient::JobDone:
@@ -141,7 +133,7 @@ EnvoyTcp::HandleEventResult(
 Envoy::Action
 EnvoyTcp::Send(Buffer* buff)
 {
-    cout << "Send buffer: " << buff->GetData() << endl;
+    cout << "The request is: " << buff->GetData() << endl;
     switch (m_tcp_client->Send(buff->GetData(), buff->GetSize()))
     {
         case TcpClient::CallAgain: case TcpClient::WaitForEvent:
@@ -158,7 +150,6 @@ EnvoyTcp::Send(Buffer* buff)
         }
         case TcpClient::JobDone:
         {
-            cout << "Buffer sent: " << buff->GetData() << endl;
             return JobDone;
         }
         default:
@@ -171,7 +162,6 @@ EnvoyTcp::Register(
     Service* service,
     function<void(unsigned char*)> callback)
 {
-    cout << "Call Register/2!" << endl;
     this->SetCallback(callback);
     auto ret = this->Register(service);
     return ret;
@@ -180,12 +170,10 @@ EnvoyTcp::Register(
 Envoy::Action
 EnvoyTcp::Register(Service* service)
 {
-    cout << "Call Register/1!" << endl;
     service->SetValue("action", "REG");
     string service_str = service->GetService();
     
     Buffer buff(service_str);
-    cout << "Init register buffer: " << buff.GetData() << endl;
     auto ret = this->Send(&buff);     
     return ret; 
 }
