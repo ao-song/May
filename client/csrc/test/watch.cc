@@ -42,10 +42,9 @@ void doer_cb(unsigned char* data)
     cout << "The response for doer is: " << data << endl;
 }
 
-void watcher(May::EventHandlerTable* table)
+void watcher(May::EnvoyTcp* envoy)
 {
     cout << "Start watcher!" << endl;
-    unique_ptr<May::EnvoyTcp> envoy = unique_ptr<May::EnvoyTcp>(new May::EnvoyTcp(table));
 
     May::Service service("id_001", "test", "127.0.0.1", 8080, {"a=1", "b=2"});
 
@@ -58,10 +57,9 @@ void watcher(May::EventHandlerTable* table)
     */
 }
 
-void doer(May::EventHandlerTable* table)
+void doer(May::EnvoyTcp* envoy)
 {
     cout << "Start doer!" << endl;
-    unique_ptr<May::EnvoyTcp> envoy = unique_ptr<May::EnvoyTcp>(new May::EnvoyTcp(table));
 
     this_thread::sleep_for(chrono::seconds(3));
 
@@ -104,11 +102,14 @@ int main()
     May::EventHandlerTable* table = new May::EventHandlerTable();
     assert(table->Init() == true);
 
+    May::EnvoyTcp* envoy_watcher = new May::EnvoyTcp(table);
+    May::EnvoyTcp* envoy_doer = new May::EnvoyTcp(table);
+
     mtx.lock();
-    auto t_watcher = thread(watcher, table);
+    auto t_watcher = thread(watcher, envoy_watcher);
     mtx.unlock();
     mtx.lock();
-    auto t_doer = thread(doer, table);
+    auto t_doer = thread(doer, envoy_doer);
     mtx.unlock();
 
     int c = 0;
@@ -123,7 +124,14 @@ int main()
     t_doer.join();
     t_watcher.join();
 
+    
+    mtx.lock();
+    envoy_watcher->CancelWatch(watch_id, watch_cb);
+    mtx.unlock();    
+
     delete table;   
+    delete envoy_watcher;
+    delete envoy_doer;
 
     return 0;
 }
