@@ -1,10 +1,9 @@
 # May
 
-Client/Server module for service discovery management. Service is defined as tuple {id, name, address, port, properties} with which can help different nodes find each other and monitor the status change.
+Client/Server module for service discovery management. Service is defined as tuple ***{id, name, address, port, properties}*** with which can help different nodes find each other and monitor the status change. All TCP connections are with non-blocking IO, the socket fds in client C++ part are monitored by *epoll*.
 
-Compile tool:
------
-The server and the client erlang part code are organized with rebar3, client C++ part is with cmake.
+How to compile:
+The server and the client erlang part code are organized with *rebar3*, client C++ part is with *cmake*. So you konw how to compile the codes.
 
 ## Server
 Server is implemented in erlang, accepts TCP connections for handling requests and send notifications.
