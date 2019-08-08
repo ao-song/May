@@ -260,6 +260,7 @@ notify_watching_client(Event, WatchingList,
             do_nothing;
         _WatchingList ->
             lists:map(fun({_WatchID, _ServiceName, _WatchingTags, Owner}) ->
+                          timer:sleep(1000), % needed to make sure the packet has been sent(todo, check if gen_server bug or a design fault
                           gen_tcp:send(Socket,
                                        term_to_binary({watching_notice,
                                                        Event,
