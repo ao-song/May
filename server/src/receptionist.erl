@@ -66,8 +66,6 @@ set_socket(Child, Socket) when is_pid(Child), is_port(Socket) ->
 %%--------------------------------------------------------------------
 init([]) ->
     process_flag(trap_exit, true),
-    {ok, _Node} = mnesia:subscribe(activity),
-    {ok, _Node} = mnesia:subscribe({table, service, detailed}),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -125,27 +123,6 @@ handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
             ok = gen_tcp:send(Socket, term_to_binary(Reply))
     end,
     {noreply, NewState};
-handle_info({mnesia_table_event,
-             {write, service, _Service, _OldRecs, _ActivityId} = Event},
-            #state{db_events = Events} = State) ->
-    NewState = State#state{db_events = [Event | Events]},
-    {noreply, NewState};
-handle_info({mnesia_table_event,
-             {delete, service, _What, _OldRecs, _ActivityId} = Event},
-            #state{db_events = Events} = State) ->
-    NewState = State#state{db_events = [Event | Events]},
-    {noreply, NewState};
-handle_info({mnesia_activity_event, {complete, ActivityId}},
-            #state{db_events = Events} = State) ->
-    NewState =
-    case lists:keyfind(ActivityId, 5, Events) of
-        {_Action, service, _What, _OldRecs, ActivityId} = Event ->
-            handle_table_event(Event, State),
-            State#state{db_events = lists:delete(Event, Events)};
-        false ->
-            State
-    end,
-    {noreply, NewState};
 handle_info({tcp_closed, Socket}, #state{socket = Socket} = State) ->
     {stop, normal, State};
 handle_info(_Info, State) ->
@@ -188,6 +165,7 @@ handle_request({register, #service{id = ID, owner = Owner} = Service},
     end,    
     try mnesia:activity(transaction, F) of
         ok ->
+            handle_table_event({write, Service}, State),
             {{registered, ID, Owner}, State}
     catch
         exit:{aborted, Reason} ->
@@ -195,11 +173,13 @@ handle_request({register, #service{id = ID, owner = Owner} = Service},
     end;
 handle_request({deregister, #service{id = ServiceId, owner = Owner}},
                State) ->
+    ServiceList = mnesia:dirty_read({service, ServiceId}),
     F = fun() ->
         mnesia:delete({service, ServiceId})
     end,
     try mnesia:activity(transaction, F) of
         ok ->
+            handle_table_event({delete, ServiceList}, State),
             {{deregistered, ServiceId, Owner}, State}
     catch
         exit:{aborted, Reason} ->
@@ -238,11 +218,11 @@ handle_request({cancel_watch, #service{id = WatchID, owner = Owner}},
     NewState = State#state{watching_services = lists:keydelete(WatchID, 1, WsList)},
     {{watch_cancelled, WatchID, Owner}, NewState}.
 
-handle_table_event({write, service, Service, _OldRecs, _ActivityId},
+handle_table_event({write, Service},
                    #state{socket = Socket, watching_services = WsList}) ->
     io:format("Table event coming, ~p~n", [Service]),
     notify_watching_client(write, WsList, Service, Socket);
-handle_table_event({delete, service, _What, DeletedRecs, _ActivityId},
+handle_table_event({delete, DeletedRecs},
                    #state{socket = Socket, watching_services = WsList}) ->
     [notify_watching_client(deleted, WsList, X, Socket) ||
      X <- DeletedRecs, is_record(X, service)].
@@ -260,7 +240,6 @@ notify_watching_client(Event, WatchingList,
             do_nothing;
         _WatchingList ->
             lists:map(fun({_WatchID, _ServiceName, _WatchingTags, Owner}) ->
-                          timer:sleep(1000), % needed to make sure the packet has been sent(todo, check if gen_server bug or a design fault
                           gen_tcp:send(Socket,
                                        term_to_binary({watching_notice,
                                                        Event,
