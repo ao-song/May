@@ -14,5 +14,7 @@ set(MAY_SOURCES
    TcpClient.cc
 )
 
+set(LOGGER_3PP ${CMAKE_CURRENT_SOURCE_DIR}/../3pp/spdlog)
+
 add_library(may SHARED ${MAY_SOURCES})
-target_include_directories(may PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../3pp/json/)
+target_include_directories(may PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../3pp/json/ ${LOGGER_3PP})
