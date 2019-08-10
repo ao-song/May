@@ -47,7 +47,7 @@ start_link() ->
 %% Before OTP 18 tuples must be used to specify a child. e.g.
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    RestartStrategy = one_for_one,
+    RestartStrategy = one_for_all,
     MaxRestarts = 1000,
     MaxSecondsBetweenRestarts = 3600,
 

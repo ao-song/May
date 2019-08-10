@@ -106,8 +106,12 @@ init([]) ->
     end,
     Port = get_srv_port(Conf),
     Host = get_srv_Host(Conf),
-    {ok, Socket} = gen_tcp:connect(Host, Port, ?SOCK_OPTIONS),
-    {ok, #state{srv_ip = Host, srv_port = Port, srv_sock = Socket}}.
+    case gen_tcp:connect(Host, Port, ?SOCK_OPTIONS) of
+        {ok, Socket} ->
+            {ok, #state{srv_ip = Host, srv_port = Port, srv_sock = Socket}};
+        _Other ->
+            {stop, "Server not ready now!"}
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
