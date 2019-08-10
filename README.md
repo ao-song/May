@@ -30,4 +30,3 @@ Todo:
     - error handling
     - logging
     - HA server
-    - Watch notice protocol check
