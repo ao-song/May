@@ -169,6 +169,7 @@ handle_request({register, #service{id = ID, owner = Owner} = Service},
             {{registered, ID, Owner}, State}
     catch
         exit:{aborted, Reason} ->
+            ?LOG_ERROR("Write mnesia failed, ~p~n", [Service]),
             {{exit, caught, Reason, ID, Owner}, State}
     end;
 handle_request({deregister, #service{id = ServiceId, owner = Owner}},
@@ -183,6 +184,7 @@ handle_request({deregister, #service{id = ServiceId, owner = Owner}},
             {{deregistered, ServiceId, Owner}, State}
     catch
         exit:{aborted, Reason} ->
+            ?LOG_ERROR("Delete mnesia failed, ~p~n", [ServiceId]),
             {{exit, caught, Reason, ServiceId, Owner}, State}
     end;
 handle_request({get, #service{name = ServiceName, owner = Owner}},
@@ -193,6 +195,7 @@ handle_request({get, #service{name = ServiceName, owner = Owner}},
             {{got, ServiceList, Owner}, State}
     catch
         exit:{aborted, Reason} ->
+            ?LOG_ERROR("Read mnesia failed, ~p~n", [ServiceName]),
             {{exit, caught, Reason, ServiceName, Owner}, State}
     end;
 handle_request({watch,
@@ -209,7 +212,6 @@ handle_request({watch,
             WatchID = erlang:phash2({node(), erlang:timestamp()}),
             NewWsList =
                 [{WatchID, ServiceName, Tags, Owner} | WsList],
-            io:format("Fist watch: ~p~n", [NewWsList]),
             {{watched, WatchID, Owner},
                  NewState#state{watching_services = NewWsList}}
     end;
@@ -220,7 +222,6 @@ handle_request({cancel_watch, #service{id = WatchID, owner = Owner}},
 
 handle_table_event({write, Service},
                    #state{socket = Socket, watching_services = WsList}) ->
-    io:format("Table event coming, ~p~n", [Service]),
     notify_watching_client(write, WsList, Service, Socket);
 handle_table_event({delete, DeletedRecs},
                    #state{socket = Socket, watching_services = WsList}) ->
@@ -234,7 +235,6 @@ notify_watching_client(Event, WatchingList,
     WsMatched =
         [X || {_WatchID, ServiceName, WatchingTags, _Owner} = X <- WatchingList,
               ServiceName == Name, (WatchingTags -- Tags) == []],
-    io:format("Watching list is: ~p, Watching clients: ~p~n", [WatchingList, WsMatched]),
     case WsMatched of
         [] ->
             do_nothing;

@@ -86,6 +86,7 @@ init([]) ->
         {ok, Config} -> 
             Config;
         {error, _Reason} ->
+            ?LOG_ERROR("Client config file not found, use default value"),
             [{server_ip, ?DEFAULT_SERVER_IP},
              {server_port, ?DEFAULT_SERVER_PORT}]
     end,
@@ -157,7 +158,6 @@ handle_cast(_Msg, State) ->
 handle_info({tcp, Socket, Bin}, #state{srv_sock = Socket} = State) ->
     inet:setopts(Socket, [{active, once}]),
     Data = binary_to_term(Bin),
-    io:format("Server response: ~p~n", [Data]),
     receptionist:handle_response(Data),
     {noreply, State};
 handle_info({tcp_closed, Socket}, #state{srv_sock = Socket} = State) ->
