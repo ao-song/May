@@ -3,11 +3,13 @@
 %%% @copyright (C) 2019, Ao Song
 %%% @doc
 %%%
-%%% For prototype, currently client will keep this connection, maybe
-%%% it is not necessary which could be updated base on real needs.
-%%%
 %%% @end
 %%% Created : 2019-04-29 12:25:02.679847
+%%%
+%%% Copyright(c) 2019-present, Ao Song <ao.song@outlook.com>
+%%% Distributed under the Apache License, Version 2.0
+%%% (https://www.apache.org/licenses/LICENSE-2.0)
+%%%
 %%%-------------------------------------------------------------------
 -module(agent).
 

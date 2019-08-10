@@ -10,6 +10,11 @@
 %%%
 %%% @end
 %%% Created : 2019-04-29 12:25:37.577465
+%%%
+%%% Copyright(c) 2019-present, Ao Song <ao.song@outlook.com>
+%%% Distributed under the Apache License, Version 2.0
+%%% (https://www.apache.org/licenses/LICENSE-2.0)
+%%%
 %%%-------------------------------------------------------------------
 -module(reception_rest).
 
