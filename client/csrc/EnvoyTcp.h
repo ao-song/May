@@ -28,6 +28,7 @@
 #include "TcpClientOwner.h"
 #include "Buffer.h"
 #include "EventHandler.h"
+#include "Logger.h"
 
 using namespace std;
 

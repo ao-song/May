@@ -80,7 +80,6 @@ TcpClient::SetInetAddr()
                   m_srv_addr_str.c_str(),
                   &(m_srv_addr_inet.addr_in4.sin_addr)) == 1)
     {
-        cout << "SetInetAddr IP is: " << m_srv_addr_str.c_str() << " Port is: " << m_srv_port << endl;
         m_ip_version = IPv4;
         m_srv_addr_inet.addr_in4.sin_family = AF_INET;
         m_srv_addr_inet.addr_in4.sin_port = htons(m_srv_port);
@@ -97,6 +96,7 @@ TcpClient::SetInetAddr()
     }
     else
     {
+        LOG_ERR("TcpClient: set inet address failed.");
         return false;
     }    
 }
@@ -116,10 +116,9 @@ TcpClient::MakeNonBlocking(int socket)
 bool
 TcpClient::Init()
 {
-    cout << "Init connection!" << endl;
+    LOG_INFO("TcpClient: Init TCP connection.");
     if (!SetInetAddr())
     {
-        cout << "Set inet addr failed!" << endl;
         // Inet address set failed.
         return false;
     }
@@ -129,7 +128,7 @@ TcpClient::Init()
                       0);
     if (m_socket == -1)
     {
-        cout << "Create socket failed!" << endl;
+        LOG_ERR("TcpClient: Create socket failed.");
         // failed to create a socket.
         return false;
     }
@@ -141,7 +140,7 @@ TcpClient::Init()
                    (const char*)&flag,
                    sizeof(flag)) != 0)
     {
-        cout << "Set sockopt failed!" << endl;
+        LOG_ERR("TcpClient: Set sockopt failed.");
         Close();
         return false;
     }
@@ -150,7 +149,7 @@ TcpClient::Init()
 
     if (!MakeNonBlocking(m_socket))
     {
-        cout << "Set nonblocking failed!" << endl;
+        LOG_ERR("TcpClient: Set nonblocking failed.");
         Close();
         return false;
     }
@@ -161,14 +160,14 @@ TcpClient::Init()
     {
         if (errno != EINPROGRESS)
         {
-            cout << "Connect failed! errno is: " << errno << endl;
+            LOG_ERR("TcpClient: Connect failed with errno {}.", errno);
             Close();
             return false;
         }
         else
         {
             // connection in progress
-            cout << "Connect in progress!" << endl;
+            LOG_DEBUG("TcpClient: Connect in progress.");
             m_state = Connecting;
             SetEvent(EPOLLIN | EPOLLOUT);
             GetTable()->HandleEvents();            
@@ -176,7 +175,7 @@ TcpClient::Init()
         }
     }
 
-    cout << "Connected!" << endl;
+    LOG_INFO("TcpClient: Connected.");
 
     m_state = Established;
     SetEvent(EPOLLIN | EPOLLOUT);
@@ -239,7 +238,7 @@ TcpClient::Send(
 {
     if (!IsConnected() && (m_state == Connecting))
     {
-        cout << "Not connected yet!" << endl;
+        LOG_DEBUG("TcpClient: Not connected yet.");
         return CallAgain;
     }
 
@@ -249,7 +248,7 @@ TcpClient::Send(
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
-            cout << "Socket not ready yet! Errno is: " << errno << endl;
+            LOG_ERR("TcpClient: Socket not ready with errno {}.", errno);
             return WaitForEvent;
         }
         return RemoveConnection;
@@ -257,7 +256,7 @@ TcpClient::Send(
 
     if (static_cast<size_t>(result) == length)
     {
-        cout << "Data has been fully sent!" << endl;
+        LOG_DEBUG("TcpClient: Data has been sent.");
         return JobDone;
     }
 
@@ -277,13 +276,16 @@ TcpClient::Receive(
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
+            LOG_DEBUG("TcpClient: Socket not ready to receive now.");
             return WaitForEvent;
         }
+        LOG_ERR("TcpClient: Socket receive failed with errno {}.", errno);
         return RemoveConnection;
     }
 
     if (result == 0)
     {
+        LOG_INFO("TcpClient: TCP connection has been closed.");
         return RemoveConnection;
     }
 
@@ -315,7 +317,7 @@ TcpClient::HandleEvent(
         {
             if (events & EPOLLOUT)
             {
-                cout << "Now it is connected!" << endl;
+                LOG_DEBUG("TcpClient: Now it is connected.");
                 m_state = Established;
             }
             break;

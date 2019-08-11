@@ -27,5 +27,4 @@ This is a client which should work with applications. It provided several interf
 Todo:
 -----
     - tls
-    - logging
     - HA server

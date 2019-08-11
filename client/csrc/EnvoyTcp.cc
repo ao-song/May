@@ -147,18 +147,17 @@ EnvoyTcp::HandleEventResult(
 Envoy::Action
 EnvoyTcp::Send(Buffer* buff)
 {
-    cout << "The request is: " << buff->GetData() << endl;
     switch (m_tcp_client->Send(buff->GetData(), buff->GetSize()))
     {
         case TcpClient::CallAgain: case TcpClient::WaitForEvent:
         {
-            cout << "Cache the buffer: " << buff->GetData() << endl;
+            LOG_DEBUG("Socket not ready for send, cache the buffer.");
             m_send_buffer.push_back(*buff);
             return DoItLater;
         }
         case TcpClient::RemoveConnection:
         {
-            cout << "Tcp closed, buffer: " << buff->GetData() << endl;
+            LOG_ERR("Send failed with action remove connection, TCP closed.");
             m_tcp_client->Close();
             return ConnectionRemoved;
         }
