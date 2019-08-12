@@ -14,8 +14,6 @@
 
 #include "EventHandler.h"
 
-#include <iostream> // debug use
-
 using namespace May;
 
 EventHandlerTable::~EventHandlerTable()

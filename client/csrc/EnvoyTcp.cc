@@ -18,8 +18,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <iostream> // debug
-
 #include "EnvoyTcp.h"
 
 using namespace May;

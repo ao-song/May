@@ -20,8 +20,6 @@
 
 #include "TcpClient.h"
 
-#include <iostream> // debug use
-
 using namespace std;
 using namespace May;
 
