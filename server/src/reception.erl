@@ -44,7 +44,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {listener}).
+-record(state, {listener, listen_port, is_tls_enabled}).
 
 %%%===================================================================
 %%% API
@@ -57,9 +57,8 @@
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
-    Port = get_server_port(),
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
+start_link() ->    
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -76,10 +75,23 @@ start_link() ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Port]) ->
+init([]) ->
+    Conf =
+    case file:consult(?CONFIG_FILE) of
+        {ok, Config} -> 
+            Config;
+        {error, _Reason} ->
+            ?LOG_ERROR("Server config file not found,"
+                       "default settings will be used"),
+            []
+    end,
+    Port = get_listen_port(Conf),
+    IsTlsEnabled = is_tls_enabled(Conf),
     case gen_tcp:listen(Port, ?SOCK_OPTIONS) of
         {ok, ListenSocket} ->            
-            {ok, accept(#state{listener = ListenSocket})};
+            {ok, accept(#state{listener = ListenSocket,
+                               listen_port = Port,
+                               is_tls_enabled = IsTlsEnabled})};
         {error, Reason} ->
             {stop, Reason}
     end.
@@ -167,5 +179,19 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-get_server_port() -> ?DEFAULT_PORT.
+get_listen_port(Config) ->
+    case lists:keyfind(listen_port, 1, Config) of
+        {listen_port, PortConf} ->
+            PortConf;
+        false ->
+            ?DEFAULT_LISTEN_PORT
+    end.
 
+is_tls_enabled(Config) ->
+    case lists:keyfind(listen_port, 1, Config) of
+        {tls, IsTlsEnabled} ->
+            IsTlsEnabled;
+        false ->
+            % not enabled by default
+            false
+    end.

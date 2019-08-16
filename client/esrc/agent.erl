@@ -100,9 +100,9 @@ init([]) ->
         {ok, Config} -> 
             Config;
         {error, _Reason} ->
-            ?LOG_ERROR("Client config file not found, use default value"),
-            [{server_ip, ?DEFAULT_SERVER_IP},
-             {server_port, ?DEFAULT_SERVER_PORT}]
+            ?LOG_ERROR("Client config file not found,"
+                       "default settings will be used"),
+            []
     end,
     Port = get_srv_port(Conf),
     Host = get_srv_Host(Conf),
@@ -212,10 +212,22 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-get_srv_port(_Config) -> ?DEFAULT_SERVER_PORT.
+get_srv_port(Config) ->
+    case lists:keyfind(server_port, 1, Config) of
+        {server_port, PortConf} ->
+            PortConf;
+        false ->
+            ?DEFAULT_SERVER_PORT
+    end.
 
 get_srv_Host(Config) ->
-    {server_ip, SrvAddr} = lists:keyfind(server_ip, 1, Config),
+    SrvAddr =
+    case lists:keyfind(server_ip, 1, Config) of
+        {server_ip, AddrConf} ->
+            AddrConf;
+        false ->
+            ?DEFAULT_SERVER_IP
+    end,
     {ok, Addr} = inet:parse_address(SrvAddr),
     Addr.
 

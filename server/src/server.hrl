@@ -33,6 +33,8 @@
 %%====================================================================
 -define(DEFAULT_TIMEOUT, 5000).
 
+-define(CONFIG_FILE, "server.conf").
+
 -define(SOCK_OPTIONS,
         [{active, once},
          binary,
@@ -40,7 +42,7 @@
          {nodelay, true},
          {reuseaddr, true}]).
 
--define(DEFAULT_PORT, 8383).
+-define(DEFAULT_LISTEN_PORT, 8383).
 
 %%====================================================================
 %% Records
