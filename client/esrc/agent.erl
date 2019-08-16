@@ -106,6 +106,13 @@ init([]) ->
     end,
     Port = get_srv_port(Conf),
     Host = get_srv_Host(Conf),
+    IsTlsEnabled = is_tls_enabled(Conf),
+    case IsTlsEnabled of
+        true ->
+            ssl:start();
+        false ->
+            no_tls
+    end,
     case gen_tcp:connect(Host, Port, ?SOCK_OPTIONS) of
         {ok, Socket} ->
             {ok, #state{srv_ip = Host, srv_port = Port, srv_sock = Socket}};
@@ -231,5 +238,12 @@ get_srv_Host(Config) ->
     {ok, Addr} = inet:parse_address(SrvAddr),
     Addr.
 
-
+is_tls_enabled(Config) ->
+    case lists:keyfind(tls, 1, Config) of
+        {tls, IsTlsEnabled} ->
+            IsTlsEnabled;
+        false ->
+            % not enabled by default
+            false
+    end.
 

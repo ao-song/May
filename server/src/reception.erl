@@ -44,7 +44,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {listener, listen_port, is_tls_enabled}).
+-record(state, {listener, listen_port, is_tls_enabled, tls_config}).
 
 %%%===================================================================
 %%% API
@@ -87,22 +87,41 @@ init([]) ->
     end,
     Port = get_listen_port(Conf),
     IsTlsEnabled = is_tls_enabled(Conf),
+    case IsTlsEnabled of
+        true ->
+            ssl:start();
+        false ->
+            no_tls
+    end,
     case gen_tcp:listen(Port, ?SOCK_OPTIONS) of
         {ok, ListenSocket} ->            
             {ok, accept(#state{listener = ListenSocket,
                                listen_port = Port,
-                               is_tls_enabled = IsTlsEnabled})};
+                               is_tls_enabled = IsTlsEnabled,
+                               tls_config = get_tls_config(Conf)})};
         {error, Reason} ->
             {stop, Reason}
     end.
 
-accept(#state{listener = ListenSocket} = State) ->
-    proc_lib:spawn(fun() -> accept_loop(ListenSocket) end),
+accept(#state{listener = ListenSocket,
+              is_tls_enabled = IsTlsEnabled,
+              tls_config = TlsConfig} = State) ->
+    proc_lib:spawn(fun() ->
+        accept_loop(ListenSocket, {IsTlsEnabled, TlsConfig}) end),
     State.
 
-accept_loop(ListenSocket) ->
-    {ok, Socket} = gen_tcp:accept(ListenSocket),
+accept_loop(ListenSocket, {IsTlsEnabled, TlsConfig}) ->
+    {ok, Sock} = gen_tcp:accept(ListenSocket),
     gen_server:cast(?SERVER, accepted),
+    Socket =
+    case IsTlsEnabled of
+        true ->
+            inet:setopts(Sock, [{active, false}]),
+            {ok, TlsSocket} = ssl:handshake(Sock, TlsConfig),
+            TlsSocket;
+        false ->
+            Sock
+    end,
     receptionist_sup:add_receptionist(Socket).
 
 %%--------------------------------------------------------------------
@@ -188,10 +207,18 @@ get_listen_port(Config) ->
     end.
 
 is_tls_enabled(Config) ->
-    case lists:keyfind(listen_port, 1, Config) of
+    case lists:keyfind(tls, 1, Config) of
         {tls, IsTlsEnabled} ->
             IsTlsEnabled;
         false ->
             % not enabled by default
             false
     end.
+
+get_tls_config(Config) ->
+    lists:filter(
+        fun({cacertfile, _V}) -> true;
+           ({certfile, _V}) -> true;
+           ({keyfile, _V}) -> true;
+           (_Other) -> false
+        end, Config).
