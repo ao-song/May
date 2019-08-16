@@ -87,42 +87,47 @@ init([]) ->
     end,
     Port = get_listen_port(Conf),
     IsTlsEnabled = is_tls_enabled(Conf),
+    TlsConfig = get_tls_config(Conf),
+
+    ListenRet =
     case IsTlsEnabled of
         true ->
-            ssl:start();
+            ssl:start(),
+            ssl:listen(Port, lists:merge(TlsConfig, ?SOCK_OPTIONS));
         false ->
-            no_tls
+            gen_tcp:listen(Port, ?SOCK_OPTIONS)
     end,
-    case gen_tcp:listen(Port, ?SOCK_OPTIONS) of
+
+    case ListenRet of
         {ok, ListenSocket} ->            
             {ok, accept(#state{listener = ListenSocket,
                                listen_port = Port,
                                is_tls_enabled = IsTlsEnabled,
-                               tls_config = get_tls_config(Conf)})};
+                               tls_config = TlsConfig})};
         {error, Reason} ->
             {stop, Reason}
     end.
 
 accept(#state{listener = ListenSocket,
-              is_tls_enabled = IsTlsEnabled,
-              tls_config = TlsConfig} = State) ->
+              is_tls_enabled = IsTlsEnabled} = State) ->
     proc_lib:spawn(fun() ->
-        accept_loop(ListenSocket, {IsTlsEnabled, TlsConfig}) end),
+        accept_loop(ListenSocket, IsTlsEnabled) end),
     State.
 
-accept_loop(ListenSocket, {IsTlsEnabled, TlsConfig}) ->
-    {ok, Sock} = gen_tcp:accept(ListenSocket),
-    gen_server:cast(?SERVER, accepted),
+accept_loop(ListenSocket, IsTlsEnabled) ->   
     Socket =
     case IsTlsEnabled of
         true ->
-            inet:setopts(Sock, [{active, false}]),
-            {ok, TlsSocket} = ssl:handshake(Sock, TlsConfig),
+            {ok, TLSTransportSocket} = ssl:transport_accept(ListenSocket),
+            inet:setopts(TLSTransportSocket, [{active, false}]),
+            {ok, TlsSocket} = ssl:handshake(TLSTransportSocket),
             TlsSocket;
         false ->
+            {ok, Sock} = gen_tcp:accept(ListenSocket),
             Sock
     end,
-    receptionist_sup:add_receptionist(Socket).
+    gen_server:cast(?SERVER, accepted),
+    receptionist_sup:add_receptionist(Socket, IsTlsEnabled).
 
 %%--------------------------------------------------------------------
 %% @private

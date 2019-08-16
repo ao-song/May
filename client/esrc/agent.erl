@@ -43,7 +43,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {srv_ip, srv_port, srv_sock}).
+-record(state, {srv_ip, srv_port, srv_sock, is_tls_enabled, tls_config}).
 
 %%%===================================================================
 %%% API
@@ -107,15 +107,20 @@ init([]) ->
     Port = get_srv_port(Conf),
     Host = get_srv_Host(Conf),
     IsTlsEnabled = is_tls_enabled(Conf),
+    TlsConfig = get_tls_config(Conf),
+
+    ConnectRet =
     case IsTlsEnabled of
         true ->
-            ssl:start();
+            ssl:start(),
+            ssl:connect(Host, Port, lists:merge(TlsConfig, ?SOCK_OPTIONS));
         false ->
-            no_tls
+            gen_tcp:connect(Host, Port, ?SOCK_OPTIONS)
     end,
-    case gen_tcp:connect(Host, Port, ?SOCK_OPTIONS) of
+    case ConnectRet of
         {ok, Socket} ->
-            {ok, #state{srv_ip = Host, srv_port = Port, srv_sock = Socket}};
+            {ok, #state{srv_ip = Host, srv_port = Port, srv_sock = Socket,
+                        is_tls_enabled = IsTlsEnabled, tls_config = TlsConfig}};
         _Other ->
             {stop, "Server not ready now!"}
     end.
@@ -135,21 +140,43 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call({send_packet, Data}, _From,
-            #state{srv_sock = Socket} = State) ->
-    Reply = gen_tcp:send(Socket, Data),
+            #state{srv_sock = Socket,
+                   is_tls_enabled = IsTlsEnabled} = State) ->
+    Reply =
+    case IsTlsEnabled of
+        true ->
+            ssl:send(Socket, Data);
+        false ->
+            gen_tcp:send(Socket, Data)
+    end,
     {reply, Reply, State};
 handle_call({send_packet, Data, {active, false}}, _From,
-            #state{srv_sock = Socket} = State) ->
+            #state{srv_sock = Socket,
+                   is_tls_enabled = IsTlsEnabled} = State) ->
     inet:setopts(Socket, [{active, false}]),
-    ok = gen_tcp:send(Socket, Data),
-    Reply = gen_tcp:recv(Socket, 0),
+    Reply =
+    case IsTlsEnabled of
+        true ->
+            ok = ssl:send(Socket, Data),
+            ssl:recv(Socket, 0);
+        false ->
+            ok = gen_tcp:send(Socket, Data),
+            gen_tcp:recv(Socket, 0)
+    end,
     %% socket should be active by default.
     inet:setopts(Socket, [{active, once}]),
     {reply, Reply, State};
 handle_call({send_packet, Data, ActiveMode}, _From,
-            #state{srv_sock = Socket} = State) ->
+            #state{srv_sock = Socket,
+                   is_tls_enabled = IsTlsEnabled} = State) ->
     inet:setopts(Socket, [ActiveMode]),
-    Reply = gen_tcp:send(Socket, Data),
+    Reply =
+    case IsTlsEnabled of
+        true ->
+            ssl:send(Socket, Data);
+        false ->
+            gen_tcp:send(Socket, Data)
+    end,
     %% socket should be active by default.
     inet:setopts(Socket, [{active, once}]),
     {reply, Reply, State};
@@ -201,8 +228,14 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, #state{srv_sock = Socket}) ->
-    gen_tcp:shutdown(Socket, read_write),
+terminate(_Reason, #state{srv_sock = Socket,
+                          is_tls_enabled = IsTlsEnabled}) ->
+    case IsTlsEnabled of
+        true ->
+            ssl:shutdown(Socket, read_write);
+        false ->
+            gen_tcp:shutdown(Socket, read_write)
+    end,    
     ok.
 
 %%--------------------------------------------------------------------
@@ -247,3 +280,10 @@ is_tls_enabled(Config) ->
             false
     end.
 
+get_tls_config(Config) ->
+    lists:filter(
+        fun({cacertfile, _V}) -> true;
+           ({certfile, _V}) -> true;
+           ({keyfile, _V}) -> true;
+           (_Other) -> false
+        end, Config).

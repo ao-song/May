@@ -32,7 +32,7 @@
 
 %% API
 -export([start_link/0]).
--export([set_socket/2]).
+-export([set_socket/3]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -46,7 +46,8 @@
 
 -record(state, {socket = null,
                 watching_services = [],
-                db_events = []}).
+                db_events = [],
+                is_tls_enabled = false}).
 
 %%%===================================================================
 %%% API
@@ -62,8 +63,8 @@
 start_link() ->
     gen_server:start_link(?MODULE, [], []).
 
-set_socket(Child, Socket) when is_pid(Child), is_port(Socket) ->
-    gen_server:cast(Child, {socket_ready, Socket}).
+set_socket(Child, Socket, IsTlsEnabled) when is_pid(Child), is_port(Socket) ->
+    gen_server:cast(Child, {socket_ready, Socket, IsTlsEnabled}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -112,9 +113,9 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({socket_ready, Socket}, State) ->
+handle_cast({socket_ready, Socket, IsTlsEnabled}, State) ->
     inet:setopts(Socket, ?SOCK_OPTIONS),
-    {noreply, State#state{socket = Socket}};
+    {noreply, State#state{socket = Socket, is_tls_enabled = IsTlsEnabled}};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -128,7 +129,9 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
+handle_info({tcp, Socket, Bin},
+            #state{socket = Socket,
+                   is_tls_enabled = IsTlsEnabled} = State) ->
     inet:setopts(Socket, [{active, once}]),
     Data = binary_to_term(Bin),
     {Reply, NewState} = handle_request(Data, State),
@@ -136,7 +139,12 @@ handle_info({tcp, Socket, Bin}, #state{socket = Socket} = State) ->
         noreply -> 
             do_nothing;
         _Else ->
-            ok = gen_tcp:send(Socket, term_to_binary(Reply))
+            case IsTlsEnabled of
+                true ->
+                    ok = ssl:send(Socket, term_to_binary(Reply));
+                false ->
+                    ok = gen_tcp:send(Socket, term_to_binary(Reply))
+            end
     end,
     {noreply, NewState};
 handle_info({tcp_closed, Socket}, #state{socket = Socket} = State) ->
@@ -155,9 +163,14 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, #state{socket = Socket}) ->
+terminate(_Reason, #state{socket = Socket, is_tls_enabled = IsTlsEnabled}) ->
     {ok, _Node} = mnesia:unsubscribe({table, service, simple}),
-    gen_tcp:shutdown(Socket, read_write),
+    case IsTlsEnabled of
+        true ->
+            ssl:shutdown(Socket, read_write);
+        false ->
+            gen_tcp:shutdown(Socket, read_write)
+    end,
     ok.
 
 %%--------------------------------------------------------------------
@@ -237,16 +250,20 @@ handle_request({cancel_watch, #service{id = WatchID, owner = Owner}},
     {{watch_cancelled, WatchID, Owner}, NewState}.
 
 handle_table_event({write, Service},
-                   #state{socket = Socket, watching_services = WsList}) ->
-    notify_watching_client(write, WsList, Service, Socket);
+                   #state{socket = Socket,
+                          watching_services = WsList,
+                          is_tls_enabled = IsTlsEnabled}) ->
+    notify_watching_client(write, WsList, Service, Socket, IsTlsEnabled);
 handle_table_event({delete, DeletedRecs},
-                   #state{socket = Socket, watching_services = WsList}) ->
-    [notify_watching_client(deleted, WsList, X, Socket) ||
+                   #state{socket = Socket,
+                          watching_services = WsList,
+                          is_tls_enabled = IsTlsEnabled}) ->
+    [notify_watching_client(deleted, WsList, X, Socket, IsTlsEnabled) ||
      X <- DeletedRecs, is_record(X, service)].
 
 notify_watching_client(Event, WatchingList,
                        #service{name = Name, properties = Tags} = Service,
-                       Socket) ->
+                       Socket, IsTlsEnabled) ->
     
     WsMatched =
         [X || {_WatchID, ServiceName, WatchingTags, _Owner} = X <- WatchingList,
@@ -256,12 +273,21 @@ notify_watching_client(Event, WatchingList,
             do_nothing;
         _WatchingList ->
             lists:map(fun({_WatchID, _ServiceName, _WatchingTags, Owner}) ->
-                          gen_tcp:send(Socket,
-                                       term_to_binary({watching_notice,
-                                                       Event,
-                                                       Service,
-                                                       Owner}))
-                      end, WsMatched)
+                case IsTlsEnabled of
+                    true ->
+                        ssl:send(Socket,
+                                 term_to_binary({watching_notice,
+                                                Event,
+                                                Service,
+                                                Owner}));
+                    false ->
+                        gen_tcp:send(Socket,
+                                     term_to_binary({watching_notice,
+                                                    Event,
+                                                    Service,
+                                                    Owner}))
+                end
+            end, WsMatched)
     end.
 
 update_watching_list({ServiceName, Tags, Owner}, List) ->

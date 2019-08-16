@@ -28,7 +28,7 @@
 
 %% API
 -export([start_link/0]).
--export([add_receptionist/1]).
+-export([add_receptionist/2]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -56,10 +56,15 @@ start_link() ->
 %% @spec add_receptionist(Socket) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-add_receptionist(Socket) ->
+add_receptionist(Socket, IsTlsEnabled) ->
     {ok, Child} = supervisor:start_child(?MODULE, []),
-    ok = gen_tcp:controlling_process(Socket, Child),
-    receptionist:set_socket(Child, Socket).
+    case IsTlsEnabled of
+        true ->
+            ok = ssl:controlling_process(Socket, Child);
+        false ->
+            ok = gen_tcp:controlling_process(Socket, Child)
+    end,
+    receptionist:set_socket(Child, Socket, IsTlsEnabled).
 
 %%%===================================================================
 %%% Supervisor callbacks
