@@ -43,7 +43,7 @@
          {nodelay, true},
          {reuseaddr, true}]).
 
--define(CONFIG_FILE, "client.conf").
+-define(CONFIG_FILE, "config/client.conf").
 
 -define(DEFAULT_SERVER_IP, "127.0.0.1").
 -define(DEFAULT_SERVER_PORT, 8383).

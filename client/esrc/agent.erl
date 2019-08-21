@@ -232,7 +232,8 @@ terminate(_Reason, #state{srv_sock = Socket,
                           is_tls_enabled = IsTlsEnabled}) ->
     case IsTlsEnabled of
         true ->
-            ssl:shutdown(Socket, read_write);
+            ssl:shutdown(Socket, read_write),
+            ssl:stop();
         false ->
             gen_tcp:shutdown(Socket, read_write)
     end,    

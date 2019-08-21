@@ -33,7 +33,7 @@
 %%====================================================================
 -define(DEFAULT_TIMEOUT, 5000).
 
--define(CONFIG_FILE, "server.conf").
+-define(CONFIG_FILE, "config/server.conf").
 
 -define(SOCK_OPTIONS,
         [{active, once},

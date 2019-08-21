@@ -119,7 +119,6 @@ accept_loop(ListenSocket, IsTlsEnabled) ->
     case IsTlsEnabled of
         true ->
             {ok, TLSTransportSocket} = ssl:transport_accept(ListenSocket),
-            inet:setopts(TLSTransportSocket, [{active, false}]),
             {ok, TlsSocket} = ssl:handshake(TLSTransportSocket),
             TlsSocket;
         false ->
@@ -186,7 +185,14 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, #state{listener = ListenSocket}) ->
+terminate(_Reason, #state{listener = ListenSocket,
+                          is_tls_enabled = IsTlsEnabled}) ->
+    case IsTlsEnabled of
+        true ->
+            ssl:close();
+        _NotTrue ->
+            do_nothing
+    end,
     gen_tcp:close(ListenSocket).
 
 %%--------------------------------------------------------------------
