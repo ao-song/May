@@ -129,9 +129,10 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({tcp, Socket, Bin},
+handle_info({Prot, Socket, Bin},
             #state{socket = Socket,
-                   is_tls_enabled = IsTlsEnabled} = State) ->
+                   is_tls_enabled = IsTlsEnabled} = State)
+    when Prot == tcp orelse Prot == ssl ->
     set_opts(Socket, [{active, once}], IsTlsEnabled),
     Data = binary_to_term(Bin),
     {Reply, NewState} = handle_request(Data, State),
@@ -139,15 +140,12 @@ handle_info({tcp, Socket, Bin},
         noreply -> 
             do_nothing;
         _Else ->
-            case IsTlsEnabled of
-                true ->
-                    ok = ssl:send(Socket, term_to_binary(Reply));
-                false ->
-                    ok = gen_tcp:send(Socket, term_to_binary(Reply))
-            end
+            send(Socket, Bin, IsTlsEnabled)          
     end,
     {noreply, NewState};
 handle_info({tcp_closed, Socket}, #state{socket = Socket} = State) ->
+    {stop, normal, State};
+handle_info({ssl_closed, Socket}, #state{socket = Socket} = State) ->
     {stop, normal, State};
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -273,20 +271,12 @@ notify_watching_client(Event, WatchingList,
             do_nothing;
         _WatchingList ->
             lists:map(fun({_WatchID, _ServiceName, _WatchingTags, Owner}) ->
-                case IsTlsEnabled of
-                    true ->
-                        ssl:send(Socket,
-                                 term_to_binary({watching_notice,
-                                                Event,
-                                                Service,
-                                                Owner}));
-                    false ->
-                        gen_tcp:send(Socket,
-                                     term_to_binary({watching_notice,
-                                                    Event,
-                                                    Service,
-                                                    Owner}))
-                end
+                send(Socket,
+                     term_to_binary({watching_notice,
+                                     Event,
+                                     Service,
+                                     Owner}),
+                     IsTlsEnabled)
             end, WsMatched)
     end.
 
@@ -305,4 +295,12 @@ set_opts(Socket, Opts, IsTlsEnabled) ->
             ssl:setopts(Socket, Opts);
         false ->
             inet:setopts(Socket, Opts)
+    end.
+
+send(Socket, Bin, IsTlsEnabled) ->
+    case IsTlsEnabled of
+        true ->
+            ok = ssl:send(Socket, Bin);
+        false ->
+            ok = gen_tcp:send(Socket, Bin)
     end.

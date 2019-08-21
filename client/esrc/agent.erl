@@ -207,13 +207,16 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({tcp, Socket, Bin}, #state{srv_sock = Socket,
-                                       is_tls_enabled = IsTlsEnabled} = State) ->
+handle_info({Prot, Socket, Bin}, #state{srv_sock = Socket,
+                                       is_tls_enabled = IsTlsEnabled} = State)
+    when Prot == tcp orelse Prot == ssl ->
     set_opts(Socket, [{active, once}], IsTlsEnabled),
     Data = binary_to_term(Bin),
     receptionist:handle_response(Data),
     {noreply, State};
 handle_info({tcp_closed, Socket}, #state{srv_sock = Socket} = State) ->
+    {stop, normal, State};
+handle_info({ssl_closed, Socket}, #state{srv_sock = Socket} = State) ->
     {stop, normal, State};
 handle_info(_Info, State) ->
     {noreply, State}.
