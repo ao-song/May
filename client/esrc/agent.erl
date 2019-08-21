@@ -153,7 +153,7 @@ handle_call({send_packet, Data}, _From,
 handle_call({send_packet, Data, {active, false}}, _From,
             #state{srv_sock = Socket,
                    is_tls_enabled = IsTlsEnabled} = State) ->
-    inet:setopts(Socket, [{active, false}]),
+    set_opts(Socket, [{active, false}], IsTlsEnabled),
     Reply =
     case IsTlsEnabled of
         true ->
@@ -164,12 +164,12 @@ handle_call({send_packet, Data, {active, false}}, _From,
             gen_tcp:recv(Socket, 0)
     end,
     %% socket should be active by default.
-    inet:setopts(Socket, [{active, once}]),
+    set_opts(Socket, [{active, once}], IsTlsEnabled),
     {reply, Reply, State};
 handle_call({send_packet, Data, ActiveMode}, _From,
             #state{srv_sock = Socket,
                    is_tls_enabled = IsTlsEnabled} = State) ->
-    inet:setopts(Socket, [ActiveMode]),
+    set_opts(Socket, [ActiveMode], IsTlsEnabled),
     Reply =
     case IsTlsEnabled of
         true ->
@@ -178,7 +178,7 @@ handle_call({send_packet, Data, ActiveMode}, _From,
             gen_tcp:send(Socket, Data)
     end,
     %% socket should be active by default.
-    inet:setopts(Socket, [{active, once}]),
+    set_opts(Socket, [{active, once}], IsTlsEnabled),
     {reply, Reply, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -207,8 +207,9 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({tcp, Socket, Bin}, #state{srv_sock = Socket} = State) ->
-    inet:setopts(Socket, [{active, once}]),
+handle_info({tcp, Socket, Bin}, #state{srv_sock = Socket,
+                                       is_tls_enabled = IsTlsEnabled} = State) ->
+    set_opts(Socket, [{active, once}], IsTlsEnabled),
     Data = binary_to_term(Bin),
     receptionist:handle_response(Data),
     {noreply, State};
@@ -288,3 +289,11 @@ get_tls_config(Config) ->
            ({keyfile, _V}) -> true;
            (_Other) -> false
         end, Config).
+
+set_opts(Socket, Opts, IsTlsEnabled) ->
+    case IsTlsEnabled of
+        true ->
+            ssl:setopts(Socket, Opts);
+        false ->
+            inet:setopts(Socket, Opts)
+    end.

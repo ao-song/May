@@ -63,7 +63,7 @@
 start_link() ->
     gen_server:start_link(?MODULE, [], []).
 
-set_socket(Child, Socket, IsTlsEnabled) when is_pid(Child), is_port(Socket) ->
+set_socket(Child, Socket, IsTlsEnabled) ->
     gen_server:cast(Child, {socket_ready, Socket, IsTlsEnabled}).
 
 %%%===================================================================
@@ -114,7 +114,7 @@ handle_call(_Request, _From, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_cast({socket_ready, Socket, IsTlsEnabled}, State) ->
-    inet:setopts(Socket, ?SOCK_OPTIONS),
+    set_opts(Socket, ?SOCK_OPTIONS, IsTlsEnabled),
     {noreply, State#state{socket = Socket, is_tls_enabled = IsTlsEnabled}};
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -132,7 +132,7 @@ handle_cast(_Msg, State) ->
 handle_info({tcp, Socket, Bin},
             #state{socket = Socket,
                    is_tls_enabled = IsTlsEnabled} = State) ->
-    inet:setopts(Socket, [{active, once}]),
+    set_opts(Socket, [{active, once}], IsTlsEnabled),
     Data = binary_to_term(Bin),
     {Reply, NewState} = handle_request(Data, State),
     case Reply of
@@ -298,3 +298,11 @@ update_watching_list({ServiceName, Tags, Owner}, List) ->
             [{WatchID, ServiceName, Tags, Owner} | L];
            (Other, L) -> [Other | L]
         end, [], List).
+
+set_opts(Socket, Opts, IsTlsEnabled) ->
+    case IsTlsEnabled of
+        true ->
+            ssl:setopts(Socket, Opts);
+        false ->
+            inet:setopts(Socket, Opts)
+    end.
