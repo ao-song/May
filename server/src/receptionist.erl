@@ -135,6 +135,7 @@ handle_info({Prot, Socket, Bin},
     when Prot == tcp orelse Prot == ssl ->
     set_opts(Socket, [{active, once}], IsTlsEnabled),
     Data = binary_to_term(Bin),
+    ?LOG_INFO("Server: Receptionist data received, ~p: ~p~n", [Prot, Data]),
     {Reply, NewState} = handle_request(Data, State),
     case Reply of
         noreply -> 

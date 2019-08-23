@@ -208,10 +208,11 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info({Prot, Socket, Bin}, #state{srv_sock = Socket,
-                                       is_tls_enabled = IsTlsEnabled} = State)
+                                        is_tls_enabled = IsTlsEnabled} = State)
     when Prot == tcp orelse Prot == ssl ->
     set_opts(Socket, [{active, once}], IsTlsEnabled),
     Data = binary_to_term(Bin),
+    ?LOG_INFO("Client: Agent data received, ~p: ~p~n", [Prot, Data]),
     receptionist:handle_response(Data),
     {noreply, State};
 handle_info({tcp_closed, Socket}, #state{srv_sock = Socket} = State) ->
