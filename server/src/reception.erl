@@ -76,6 +76,7 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+    ok = logger:set_module_level(?MODULE, debug),
     Conf =
     case file:consult(?CONFIG_FILE) of
         {ok, Config} -> 

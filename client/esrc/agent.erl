@@ -95,6 +95,7 @@ send(Data, ActiveMode) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+    ok = logger:set_module_level(?MODULE, debug),
     Conf =
     case file:consult(?CONFIG_FILE) of
         {ok, Config} -> 
@@ -119,6 +120,7 @@ init([]) ->
     end,
     case ConnectRet of
         {ok, Socket} ->
+            ?LOG_INFO("Client connected with socket: ~p", [Socket]),
             {ok, #state{srv_ip = Host, srv_port = Port, srv_sock = Socket,
                         is_tls_enabled = IsTlsEnabled, tls_config = TlsConfig}};
         _Other ->
@@ -142,27 +144,16 @@ init([]) ->
 handle_call({send_packet, Data}, _From,
             #state{srv_sock = Socket,
                    is_tls_enabled = IsTlsEnabled} = State) ->
-    Reply =
-    case IsTlsEnabled of
-        true ->
-            ssl:send(Socket, Data);
-        false ->
-            gen_tcp:send(Socket, Data)
-    end,
+    Reply = send(Socket, Data, IsTlsEnabled),
+    ?LOG_DEBUG("Sent packet ~p with reply: ~p~n", [Data, Reply]),
     {reply, Reply, State};
 handle_call({send_packet, Data, {active, false}}, _From,
             #state{srv_sock = Socket,
                    is_tls_enabled = IsTlsEnabled} = State) ->
     set_opts(Socket, [{active, false}], IsTlsEnabled),
-    Reply =
-    case IsTlsEnabled of
-        true ->
-            ok = ssl:send(Socket, Data),
-            ssl:recv(Socket, 0);
-        false ->
-            ok = gen_tcp:send(Socket, Data),
-            gen_tcp:recv(Socket, 0)
-    end,
+    ok = send(Socket, Data, IsTlsEnabled),
+    Reply = recv(Socket, IsTlsEnabled),
+    ?LOG_DEBUG("Sent packet ~p with reply: ~p~n", [Data, Reply]),
     %% socket should be active by default.
     set_opts(Socket, [{active, once}], IsTlsEnabled),
     {reply, Reply, State};
@@ -170,13 +161,8 @@ handle_call({send_packet, Data, ActiveMode}, _From,
             #state{srv_sock = Socket,
                    is_tls_enabled = IsTlsEnabled} = State) ->
     set_opts(Socket, [ActiveMode], IsTlsEnabled),
-    Reply =
-    case IsTlsEnabled of
-        true ->
-            ssl:send(Socket, Data);
-        false ->
-            gen_tcp:send(Socket, Data)
-    end,
+    Reply = send(Socket, Data, IsTlsEnabled),
+    ?LOG_DEBUG("Sent packet ~p with reply: ~p~n", [Data, Reply]),
     %% socket should be active by default.
     set_opts(Socket, [{active, once}], IsTlsEnabled),
     {reply, Reply, State};
@@ -212,7 +198,7 @@ handle_info({Prot, Socket, Bin}, #state{srv_sock = Socket,
     when Prot == tcp orelse Prot == ssl ->
     set_opts(Socket, [{active, once}], IsTlsEnabled),
     Data = binary_to_term(Bin),
-    ?LOG_INFO("Client: Agent data received, ~p: ~p~n", [Prot, Data]),
+    ?LOG_INFO("Client: Agent received data, ~p: ~p~n", [Prot, Data]),
     receptionist:handle_response(Data),
     {noreply, State};
 handle_info({tcp_closed, Socket}, #state{srv_sock = Socket} = State) ->
@@ -300,4 +286,20 @@ set_opts(Socket, Opts, IsTlsEnabled) ->
             ssl:setopts(Socket, Opts);
         false ->
             inet:setopts(Socket, Opts)
+    end.
+
+send(Socket, Data, IsTlsEnabled) ->
+    case IsTlsEnabled of
+        true ->
+            ok = ssl:send(Socket, Data);
+        false ->
+            ok = gen_tcp:send(Socket, Data)
+    end.
+
+recv(Socket, IsTlsEnabled) ->
+    case IsTlsEnabled of
+        true ->
+            ok = ssl:recv(Socket, 0);
+        false ->
+            ok = gen_tcp:recv(Socket, 0)
     end.

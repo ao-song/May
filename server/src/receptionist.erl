@@ -82,6 +82,7 @@ set_socket(Child, Socket, IsTlsEnabled) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+    ok = logger:set_module_level(?MODULE, debug),
     process_flag(trap_exit, true),
     {ok, #state{}}.
 
@@ -114,6 +115,7 @@ handle_call(_Request, _From, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_cast({socket_ready, Socket, IsTlsEnabled}, State) ->
+    ?LOG_INFO("Set socket."),
     set_opts(Socket, ?SOCK_OPTIONS, IsTlsEnabled),
     {noreply, State#state{socket = Socket, is_tls_enabled = IsTlsEnabled}};
 handle_cast(_Msg, State) ->
@@ -135,13 +137,13 @@ handle_info({Prot, Socket, Bin},
     when Prot == tcp orelse Prot == ssl ->
     set_opts(Socket, [{active, once}], IsTlsEnabled),
     Data = binary_to_term(Bin),
-    ?LOG_INFO("Server: Receptionist data received, ~p: ~p~n", [Prot, Data]),
+    ?LOG_INFO("Server: Receptionist received data, ~p: ~p~n", [Prot, Data]),
     {Reply, NewState} = handle_request(Data, State),
     case Reply of
         noreply -> 
             do_nothing;
         _Else ->
-            send(Socket, Bin, IsTlsEnabled)          
+            send(Socket, term_to_binary(Reply), IsTlsEnabled)          
     end,
     {noreply, NewState};
 handle_info({tcp_closed, Socket}, #state{socket = Socket} = State) ->
@@ -298,10 +300,10 @@ set_opts(Socket, Opts, IsTlsEnabled) ->
             inet:setopts(Socket, Opts)
     end.
 
-send(Socket, Bin, IsTlsEnabled) ->
+send(Socket, Data, IsTlsEnabled) ->
     case IsTlsEnabled of
         true ->
-            ok = ssl:send(Socket, Bin);
+            ok = ssl:send(Socket, Data);
         false ->
-            ok = gen_tcp:send(Socket, Bin)
+            ok = gen_tcp:send(Socket, Data)
     end.

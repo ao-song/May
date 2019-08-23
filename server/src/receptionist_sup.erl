@@ -26,6 +26,8 @@
 
 -behaviour(supervisor).
 
+-include("server.hrl").
+
 %% API
 -export([start_link/0]).
 -export([add_receptionist/2]).
@@ -58,6 +60,8 @@ start_link() ->
 %%--------------------------------------------------------------------
 add_receptionist(Socket, IsTlsEnabled) ->
     {ok, Child} = supervisor:start_child(?MODULE, []),
+    ?LOG_INFO("Add a receptionist to handle the incoming connection with"
+              " socket: ~p~n", [Socket]),
     case IsTlsEnabled of
         true ->
             ok = ssl:controlling_process(Socket, Child);
@@ -84,6 +88,7 @@ add_receptionist(Socket, IsTlsEnabled) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+    ok = logger:set_module_level(?MODULE, debug),
     RestartStrategy = simple_one_for_one,
     MaxRestarts = 1000,
     MaxSecondsBetweenRestarts = 3600,
