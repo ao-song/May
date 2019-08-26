@@ -2,7 +2,7 @@
 
 Client/Server module for service discovery management. Service is defined as tuple ***{id, name, address, port, properties}*** with which can help different nodes find each other and monitor the status change. All TCP connections are with non-blocking IO, the socket fds in client C++ part are monitored by *epoll*.
 
-The Client and Server can be configured as talk in TLS.
+The Client and Server can be configured to talk in TLS.
 
 How to compile:
 The server and the client erlang part code are organized with *rebar3*, client C++ part is with *cmake*. So you konw how to compile the codes.
