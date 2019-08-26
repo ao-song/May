@@ -4,6 +4,8 @@ Client/Server module for service discovery management. Service is defined as tup
 
 The Client and Server can be configured to talk in TLS.
 
+![Here is how May looks like](https://github.com/ao-song/May/blob/master/img/may.png)
+
 How to compile:
 The server and the client erlang part code are organized with *rebar3*, client C++ part is with *cmake*. So you konw how to compile the codes.
 
@@ -11,12 +13,12 @@ The server and the client erlang part code are organized with *rebar3*, client C
 Server is implemented in erlang, accepts TCP connections for handling requests and send notifications.
 
 ## Client
-Client is divided into two parts, which are implemented in C++ and erlang. These two parts can be run on either same node or different nodes which is flexible.
+Client is divided into two parts, which are implemented in C++ (Envoy) and erlang (Agent). These two parts can be run on either same node or different nodes which is flexible.
 
-### Client erlang part
+### Agent
 This is a client which work as a proxy between C++ part client and server. Both sides are TCP connections. It can handle more than one C++ clients and one connection to the server.
 
-### Client C++ part (Envoy)
+### Envoy
 This is a client which should work with applications. It provided several interfaces for Service Discovery management.
 
 #### Interfaces
