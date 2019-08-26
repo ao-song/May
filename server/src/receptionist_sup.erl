@@ -76,7 +76,7 @@ notify_children(Msg) ->
     notify_children(Msg, []).
 
 notify_children(Msg, ExceptionList) ->
-    Children = [Child || {_Id, Child, _Type, _Modules} <- supervisor:which_children(self()),
+    Children = [Child || {_Id, Child, _Type, _Modules} <- supervisor:which_children(?SERVER),
                          Child =/= restarting, Child =/= undefined],
     [(X ! {sup_msg, Msg}) || X <- (Children -- ExceptionList), is_pid(X)].
 
