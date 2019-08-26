@@ -16,7 +16,7 @@ Client is divided into two parts, which are implemented in C++ and erlang. These
 ### Client erlang part
 This is a client which work as a proxy between C++ part client and server. Both sides are TCP connections. It can handle more than one C++ clients and one connection to the server.
 
-### Client C++ part
+### Client C++ part (Envoy)
 This is a client which should work with applications. It provided several interfaces for Service Discovery management.
 
 #### Interfaces
