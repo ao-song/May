@@ -146,6 +146,12 @@ handle_info({Prot, Socket, Bin},
             send(Socket, term_to_binary(Reply), IsTlsEnabled)          
     end,
     {noreply, NewState};
+handle_info({sup_msg, {write, Service}}, State) ->
+    handle_table_event({write, Service}, State),
+    {noreply, State};
+handle_info({sup_msg, {delete, ServiceList}}, State) ->
+    handle_table_event({delete, ServiceList}, State),
+    {noreply, State};
 handle_info({tcp_closed, Socket}, #state{socket = Socket} = State) ->
     {stop, normal, State};
 handle_info({ssl_closed, Socket}, #state{socket = Socket} = State) ->
@@ -195,6 +201,7 @@ handle_request({register, #service{id = ID, owner = Owner} = Service},
     end,    
     try mnesia:activity(transaction, F) of
         ok ->
+            notify_other_children({write, Service}),
             handle_table_event({write, Service}, State),
             {{registered, ID, Owner}, State}
     catch
@@ -210,6 +217,7 @@ handle_request({deregister, #service{id = ServiceId, owner = Owner}},
     end,
     try mnesia:activity(transaction, F) of
         ok ->
+            notify_other_children({delete, ServiceList}),
             handle_table_event({delete, ServiceList}, State),
             {{deregistered, ServiceId, Owner}, State}
     catch
@@ -307,3 +315,6 @@ send(Socket, Data, IsTlsEnabled) ->
         false ->
             ok = gen_tcp:send(Socket, Data)
     end.
+
+notify_other_children(Event) ->
+    receptionist_sup:notify_children(Event, [self()]).

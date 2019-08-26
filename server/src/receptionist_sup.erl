@@ -31,6 +31,8 @@
 %% API
 -export([start_link/0]).
 -export([add_receptionist/2]).
+-export([notify_children/1,
+         notify_children/2]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -69,6 +71,15 @@ add_receptionist(Socket, IsTlsEnabled) ->
             ok = gen_tcp:controlling_process(Socket, Child)
     end,
     receptionist:set_socket(Child, Socket, IsTlsEnabled).
+
+notify_children(Msg) ->
+    notify_children(Msg, []).
+
+notify_children(Msg, ExceptionList) ->
+    Children = [Child || {_Id, Child, _Type, _Modules} <- supervisor:which_children(self()),
+                         Child =/= restarting, Child =/= undefined],
+    [(X ! {sup_msg, Msg}) || X <- (Children -- ExceptionList), is_pid(X)].
+
 
 %%%===================================================================
 %%% Supervisor callbacks
