@@ -29,6 +29,8 @@ This is a client which should work with applications. It provided several interf
     - CancelWatch, cancel the created watch and provide a callback to handle the response;
 
 Todo:
------
-    - tls between Client erlang node and Client c++
+-----    
     - HA server
+    - tls between Client erlang node and Envoy
+    - Considering more general Service struction definition rather than the existing id, name blabla?
+    - Now it is only perfect match maybe a more loose match can be supported?
