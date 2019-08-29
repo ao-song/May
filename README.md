@@ -32,5 +32,5 @@ Todo:
 -----    
     - HA server
     - tls between Client erlang node and Envoy
-    - Considering more general Service struction definition rather than the existing id, name blabla?
+    - Considering more general Service structure definition rather than the existing id, name blabla?
     - Now it is only perfect match maybe a more loose match can be supported?
