@@ -45,7 +45,7 @@
 -define(SERVER, ?MODULE).
 
 -record(state, {socket = null,
-                watching_services = [],
+                subscription_list = [],
                 db_events = [],
                 is_tls_enabled = false}).
 
@@ -236,54 +236,54 @@ handle_request({get, #service{name = ServiceName, owner = Owner}},
             ?LOG_ERROR("Read mnesia failed, ~p~n", [ServiceName]),
             {{exit, caught, Reason, ServiceName, Owner}, State}
     end;
-handle_request({watch,
+handle_request({subscribe,
                #service{name = ServiceName, properties = Tags, owner = Owner}},
-               #state{watching_services = WsList} = State) ->
-    NewState = State#state{watching_services =
-        update_watching_list({ServiceName, Tags, Owner}, WsList)},
+               #state{subscription_list = WsList} = State) ->
+    NewState = State#state{subscription_list =
+        update_subscription_list({ServiceName, Tags, Owner}, WsList)},
 
-    case get(update_watch) of
-        {true, WatchID} ->
-            erase(update_watch),
-            {{watch_updated, WatchID, Owner}, NewState};
+    case get(update_subscription) of
+        {true, SubscribeID} ->
+            erase(update_subscription),
+            {{subscribe_updated, SubscribeID, Owner}, NewState};
         _Other ->
-            WatchID = erlang:phash2({node(), erlang:timestamp()}),
+            SubscribeID = erlang:phash2({node(), erlang:timestamp()}),
             NewWsList =
-                [{WatchID, ServiceName, Tags, Owner} | WsList],
-            {{watched, WatchID, Owner},
-                 NewState#state{watching_services = NewWsList}}
+                [{SubscribeID, ServiceName, Tags, Owner} | WsList],
+            {{subscribed, SubscribeID, Owner},
+                 NewState#state{subscription_list = NewWsList}}
     end;
-handle_request({cancel_watch, #service{id = WatchID, owner = Owner}},
-               #state{watching_services = WsList} = State) ->
-    NewState = State#state{watching_services = lists:keydelete(WatchID, 1, WsList)},
-    {{watch_cancelled, WatchID, Owner}, NewState}.
+handle_request({cancel_subscribe, #service{id = SubscribeID, owner = Owner}},
+               #state{subscription_list = WsList} = State) ->
+    NewState = State#state{subscription_list = lists:keydelete(SubscribeID, 1, WsList)},
+    {{unsubscribed, SubscribeID, Owner}, NewState}.
 
 handle_table_event({write, Service},
                    #state{socket = Socket,
-                          watching_services = WsList,
+                          subscription_list = WsList,
                           is_tls_enabled = IsTlsEnabled}) ->
-    notify_watching_client(write, WsList, Service, Socket, IsTlsEnabled);
+    notify_subscribed_client(write, WsList, Service, Socket, IsTlsEnabled);
 handle_table_event({delete, DeletedRecs},
                    #state{socket = Socket,
-                          watching_services = WsList,
+                          subscription_list = WsList,
                           is_tls_enabled = IsTlsEnabled}) ->
-    [notify_watching_client(deleted, WsList, X, Socket, IsTlsEnabled) ||
+    [notify_subscribed_client(deleted, WsList, X, Socket, IsTlsEnabled) ||
      X <- DeletedRecs, is_record(X, service)].
 
-notify_watching_client(Event, WatchingList,
+notify_subscribed_client(Event, SubscribedList,
                        #service{name = Name, properties = Tags} = Service,
                        Socket, IsTlsEnabled) ->
     
     WsMatched =
-        [X || {_WatchID, ServiceName, WatchingTags, _Owner} = X <- WatchingList,
-              ServiceName == Name, (WatchingTags -- Tags) == []],
+        [X || {_SubscribeID, ServiceName, SubscribedTags, _Owner} = X <- SubscribedList,
+              ServiceName == Name, (SubscribedTags -- Tags) == []],
     case WsMatched of
         [] ->
             do_nothing;
-        _WatchingList ->
-            lists:map(fun({_WatchID, _ServiceName, _WatchingTags, Owner}) ->
+        _SubscribedList ->
+            lists:map(fun({_SubscribeID, _ServiceName, _SubscribedTags, Owner}) ->
                 send(Socket,
-                     term_to_binary({watching_notice,
+                     term_to_binary({notification,
                                      Event,
                                      Service,
                                      Owner}),
@@ -291,12 +291,12 @@ notify_watching_client(Event, WatchingList,
             end, WsMatched)
     end.
 
-update_watching_list({ServiceName, Tags, Owner}, List) ->
+update_subscription_list({ServiceName, Tags, Owner}, List) ->
     lists:foldl(
-        fun({WatchID, ServiceNameX, _OldTags, OwnerX}, L)
+        fun({SubscribeID, ServiceNameX, _OldTags, OwnerX}, L)
               when ServiceNameX == ServiceName andalso OwnerX == Owner ->
-            put(update_watch, {true, WatchID}),
-            [{WatchID, ServiceName, Tags, Owner} | L];
+            put(update_subscription, {true, SubscribeID}),
+            [{SubscribeID, ServiceName, Tags, Owner} | L];
            (Other, L) -> [Other | L]
         end, [], List).
 

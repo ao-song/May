@@ -55,12 +55,12 @@
 -define(CODE_SERVER_UNAVAILABLE, 503).
 -define(SERVICE_SUCCESFULLY_REGISTERED, "Service succesfully registered.").
 -define(SERVICE_SUCCESFULLY_DEREGISTERED, "Service succesfully deregistered.").
--define(SERVICE_SUCCESFULLY_WATCHED, "Service watch succesfully created.").
+-define(SERVICE_SUCCESFULLY_SUBSCRIBED, "Service subscribe succesfully created.").
 -define(REQUEST_FAILED, "Request failed.").
 -define(SERVICE_NOT_SUPPORTED, "Service not supported.").
 -define(JSON_TYPE, "application/json").
 
--define(WATCH_ENDPOINT_BASE, "/v1/health/service/").
+-define(SUBSCRIBE_ENDPOINT_BASE, "/v1/health/service/").
 -define(REGISTER_ENDPOINT, "/v1/agent/service/register").
 -define(DEREGISTER_ENDPOINT_BASE, "/v1/agent/service/deregister/").
 -define(GET_ENDPOINT_BASE, "/v1/agent/service/get/").

@@ -74,13 +74,13 @@ namespace May
         Action Get(
             string* service_name,
             function<void(unsigned char*)> callback);
-        Action Watch(Service* service);
-        Action Watch(
+        Action Subscribe(Service* service);
+        Action Subscribe(
             Service* service,
             function<void(unsigned char*)> callback);
-        Action CancelWatch(const int& watch_id);
-        Action CancelWatch(
-            const int& watch_id,
+        Action Unsubscribe(const int& subscribe_id);
+        Action Unsubscribe(
+            const int& subscribe_id,
             function<void(unsigned char*)> callback);
 
         void SetCallback(

@@ -47,13 +47,13 @@ namespace May
         virtual Action Deregister(
             string* service_id,
             function<void(unsigned char*)> callback) = 0;
-        virtual Action Watch(Service* service) = 0;
-        virtual Action Watch(
+        virtual Action Subscribe(Service* service) = 0;
+        virtual Action Subscribe(
             Service* service,
             function<void(unsigned char*)> callback) = 0;
-        virtual Action CancelWatch(const int& watch_id) = 0;
-        virtual Action CancelWatch(
-            const int& watch_id,
+        virtual Action Unsubscribe(const int& subscribe_id) = 0;
+        virtual Action Unsubscribe(
+            const int& subscribe_id,
             function<void(unsigned char*)> callback) = 0;
     };
 }

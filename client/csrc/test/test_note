@@ -22,7 +22,7 @@
   342  curl http://localhost:8301/v1/agent/service/deregister/5927_5927_1_38484376156554490373_tt
 
 
-g++ -g -Wall -std=c++11 -o reg_dereg -pthread reg_dereg.cc -L../_build -lmay -I ../ -I ../../3pp/json/
-g++ -g -Wall -std=c++11 -o watch -pthread watch.cc -L../_build -lmay -I ../ -I ../../3pp/json/
+g++ -g -Wall -std=c++11 -o reg_dereg -pthread reg_dereg.cc -L../_build -lmay -I ../ -I ../../3pp/json/ -I ../../3pp
+g++ -g -Wall -std=c++11 -o subscribe -pthread subscribe.cc -L../_build -lmay -I ../ -I ../../3pp/json/ -I ../../3pp
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ao/github/May/client/csrc/_build
 

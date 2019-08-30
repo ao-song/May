@@ -25,8 +25,8 @@ This is a client which should work with applications. It provided several interf
     - Register, register service to server and provide a callback to handle the response;
     - Deregister, de-register service from server and provide a callback to handle the response;
     - Get, get the services which match the request and provide a callback to handle the response;
-    - Watch, create a watch on services change with match condition and provide a callback to handle the response;
-    - CancelWatch, cancel the created watch and provide a callback to handle the response;
+    - Subscribe, create a subscribe on services change with match condition and provide a callback to handle the response;
+    - Unsubscribe, cancel the created subscribe and provide a callback to handle the response;
 
 Todo:
 -----    

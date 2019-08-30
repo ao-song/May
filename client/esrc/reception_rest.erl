@@ -82,11 +82,11 @@ handle_response({deregistered, _ID}) ->
 handle_response({got, ServiceList}) ->
     Body = service_list_to_json(ServiceList, []),
     {proceed, [{response, {?CODE_200_OK, Body}}]};
-%% todo, json handling in erlang httpd response? watch part should
+%% todo, json handling in erlang httpd response? subscribe part should
 %% be implemented in another approach.
-handle_response({watched, ok}) ->
-    {proceed, [{response, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_WATCHED}}]};
-handle_response({watched, ServiceList}) ->
+handle_response({subscribed, ok}) ->
+    {proceed, [{response, {?CODE_200_OK, ?SERVICE_SUCCESFULLY_SUBSCRIBED}}]};
+handle_response({subscribed, ServiceList}) ->
     Body = service_list_to_json(ServiceList, []),
     {proceed, [{response, {response, [{code, ?CODE_200_OK},
                                       {content_type, ?JSON_TYPE}],
@@ -134,14 +134,14 @@ do(#mod{request_uri = ?GET_ENDPOINT_BASE ++ ServiceName}) ->
         {error, _Reason} ->
             {proceed, [{response, {?CODE_CLIENT_ERROR, ?REQUEST_FAILED}}]}
     end;
-do(#mod{request_uri = ?WATCH_ENDPOINT_BASE ++ _ServiceNameAndParas,
+do(#mod{request_uri = ?SUBSCRIBE_ENDPOINT_BASE ++ _ServiceNameAndParas,
         absolute_uri = AbUri}) ->
     {ok, {_Scheme, _UserInfo, _Host, _Port, Path, Query}} =
     http_uri:parse("http://" ++ AbUri),
     Queries = httpd:parse_query(Query),
     BlockingTimeout = get_wait_time_in_query(Queries),
-    ?WATCH_ENDPOINT_BASE ++ ServiceName = Path,
-    case agent:send({watch, ServiceName, BlockingTimeout}, {active, false}) of
+    ?SUBSCRIBE_ENDPOINT_BASE ++ ServiceName = Path,
+    case agent:send({subscribe, ServiceName, BlockingTimeout}, {active, false}) of
         {ok, Packet} ->
             handle_response(Packet);
         {error, _Reason} ->

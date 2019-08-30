@@ -77,14 +77,14 @@ handle_response({deregistered, ID, Owner}) ->
     gen_server:cast(Owner, {deregistered, ID});
 handle_response({got, ServiceList, Owner}) ->    
     gen_server:cast(Owner, {got, ServiceList});
-handle_response({watch_updated, WatchID, Owner}) ->
-    gen_server:cast(Owner, {watch_updated, WatchID});
-handle_response({watched, WatchID, Owner}) ->
-    gen_server:cast(Owner, {watched, WatchID});
-handle_response({watching_notice, Event, Service, Owner}) ->
-    gen_server:cast(Owner, {watching_notice, Event, Service});
-handle_response({watch_cancelled, WatchID, Owner}) ->
-    gen_server:cast(Owner, {watch_cancelled, WatchID});
+handle_response({subscribe_updated, SubscribeID, Owner}) ->
+    gen_server:cast(Owner, {subscribe_updated, SubscribeID});
+handle_response({subscribed, SubscribeID, Owner}) ->
+    gen_server:cast(Owner, {subscribed, SubscribeID});
+handle_response({notification, Event, Service, Owner}) ->
+    gen_server:cast(Owner, {notification, Event, Service});
+handle_response({unsubscribed, SubscribeID, Owner}) ->
+    gen_server:cast(Owner, {unsubscribed, SubscribeID});
 handle_response({exit, caught, Reason, Request, Owner}) ->
     gen_server:cast(Owner, {request_failed, Reason, Request});
 handle_response(_Response) -> ok.
@@ -154,15 +154,15 @@ handle_cast({got, ServiceList}, #state{socket = Socket} = State) ->
     Body = service_list_to_json(ServiceList, []),
     gen_tcp:send(Socket, Body),
     {noreply, State};
-handle_cast({watch_updated, WatchID}, #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, jsone:encode([#{response=>watch_updated},
-                                       #{watchID=>c2a(WatchID)}])),
+handle_cast({subscribe_updated, SubscribeID}, #state{socket = Socket} = State) ->
+    gen_tcp:send(Socket, jsone:encode([#{response=>subscribe_updated},
+                                       #{subscribeID=>c2a(SubscribeID)}])),
     {noreply, State};
-handle_cast({watched, WatchID}, #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, jsone:encode([#{response=>watched},
-                                       #{watchID=>c2a(WatchID)}])),
+handle_cast({subscribed, SubscribeID}, #state{socket = Socket} = State) ->
+    gen_tcp:send(Socket, jsone:encode([#{response=>subscribed},
+                                       #{subscribeID=>c2a(SubscribeID)}])),
     {noreply, State};
-handle_cast({watching_notice, Event, Service},
+handle_cast({notification, Event, Service},
             #state{socket = Socket} = State) ->
     #service{id = ID,
              name = Name,
@@ -175,13 +175,13 @@ handle_cast({watching_notice, Event, Service},
                                 #{port => c2a(Port)},
                                 #{tags => [c2a(X) || X <- Props]}]},
     gen_tcp:send(Socket,
-                 jsone:encode([#{response=>watching_notice},
+                 jsone:encode([#{response=>notification},
                                #{event=>c2a(Event)},
                                #{service=>ServiceJson}])),
     {noreply, State};
-handle_cast({watch_cancelled, WatchID}, #state{socket = Socket} = State) ->
-    gen_tcp:send(Socket, jsone:encode([#{response=>watch_cancelled},
-                                       #{id=>c2a(WatchID)}])),
+handle_cast({unsubscribed, SubscribeID}, #state{socket = Socket} = State) ->
+    gen_tcp:send(Socket, jsone:encode([#{response=>unsubscribed},
+                                       #{id=>c2a(SubscribeID)}])),
     {noreply, State};
 handle_cast({request_failed, Reason, Request},
             #state{socket = Socket} = State) ->
@@ -260,8 +260,8 @@ construct_request_msg(Body) ->
         "DEREG" ->
             {deregister,
              #service{id = c2l(maps:get(list_to_binary("id"), ParsedBody))}};
-        "WATCH" ->
-            {watch,
+        "SUBSCRIBE" ->
+            {subscribe,
              #service{id = c2l(maps:get(list_to_binary("id"), ParsedBody)),
                       name = c2l(maps:get(list_to_binary("name"), ParsedBody)),
                       address = c2l(maps:get(list_to_binary("address"),
@@ -270,8 +270,8 @@ construct_request_msg(Body) ->
                       properties =
                           [c2l(X) || X <- maps:get(list_to_binary("tags"),
                                                    ParsedBody)]}};
-        "CANCELWATCH" ->
-            {cancel_watch,
+        "CANCELSUBSCRIBE" ->
+            {cancel_subscribe,
              #service{id = c2l(maps:get(list_to_binary("id"), ParsedBody))}};
         "GET" ->
             {get,

@@ -236,19 +236,19 @@ EnvoyTcp::Get(
 }
 
 Envoy::Action
-EnvoyTcp::Watch(
+EnvoyTcp::Subscribe(
     Service* service,
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);
-    auto ret = this->Watch(service);
+    auto ret = this->Subscribe(service);
     return ret;
 }
 
 Envoy::Action
-EnvoyTcp::Watch(Service* service)
+EnvoyTcp::Subscribe(Service* service)
 {
-    service->SetValue("action", "WATCH");
+    service->SetValue("action", "SUBSCRIBE");
     string service_str = service->GetService();
     Buffer buff(service_str);
     auto ret = this->Send(&buff);   
@@ -256,11 +256,11 @@ EnvoyTcp::Watch(Service* service)
 }
 
 Envoy::Action 
-EnvoyTcp::CancelWatch(const int& watch_id)
+EnvoyTcp::Unsubscribe(const int& subscribe_id)
 {
     unique_ptr<Service> service = unique_ptr<Service>(new Service());
-    service->SetValue("action", "CANCELWATCH");
-    service->SetValue("id", watch_id);
+    service->SetValue("action", "CANCELSUBSCRIBE");
+    service->SetValue("id", subscribe_id);
     
     string service_str = service->GetService();
     Buffer buff(service_str);    
@@ -269,11 +269,11 @@ EnvoyTcp::CancelWatch(const int& watch_id)
 }
 
 Envoy::Action
-EnvoyTcp::CancelWatch(
-    const int& watch_id,
+EnvoyTcp::Unsubscribe(
+    const int& subscribe_id,
     function<void(unsigned char*)> callback)
 {
     this->SetCallback(callback);
-    auto ret = this->CancelWatch(watch_id);
+    auto ret = this->Unsubscribe(subscribe_id);
     return ret;
 }
