@@ -149,7 +149,7 @@ EnvoyTcp::Send(Buffer* buff)
     {
         case TcpClient::CallAgain: case TcpClient::WaitForEvent:
         {
-            LOG_DEBUG("Socket not ready for send, cache the buffer.");
+            LOG_WARN("Socket not ready to send now, cache the buffer.");
             m_send_buffer.push_back(*buff);
             return DoItLater;
         }

@@ -21,6 +21,8 @@
 #include <string>
 #include <memory>
 
+#include "Logger.h"
+
 using namespace std;
 
 namespace May

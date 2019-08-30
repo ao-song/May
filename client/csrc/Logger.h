@@ -18,3 +18,4 @@
 #define LOG_INFO  spdlog::info
 #define LOG_ERR   spdlog::error
 #define LOG_DEBUG spdlog::debug
+#define LOG_WARN  spdlog::warn

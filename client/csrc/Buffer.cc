@@ -19,11 +19,12 @@ using namespace May;
 Buffer::Buffer(size_t size)
 : m_size(size)  
 {
+    LOG_DEBUG("Init an empty buffer with size: {}", size);
     m_data = shared_ptr<unsigned char>(new unsigned char[size],
         [](unsigned char* data)
         {
             delete[] data;
-        }); 
+        });
 }
 
 Buffer::Buffer(
@@ -31,6 +32,7 @@ Buffer::Buffer(
     size_t size)
 : m_size(size) 
 {
+    LOG_DEBUG("Init a buffer with data: {} and size: {}", data, size);
     m_data = shared_ptr<unsigned char>(new unsigned char[size],
         [](unsigned char* data)
         {
@@ -41,6 +43,7 @@ Buffer::Buffer(
 
 Buffer::Buffer(string& str)
 {
+    LOG_DEBUG("Init a buffer with a string: {}", str);
     m_size = str.size();
     m_data = shared_ptr<unsigned char>(new unsigned char[m_size],
         [](unsigned char* data)
