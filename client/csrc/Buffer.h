@@ -35,14 +35,54 @@ namespace May
             unsigned char* data,
             size_t size);
         Buffer(string& str);
+        Buffer(const Buffer& buff)
+        {
+            m_size = buff.m_size;
+            m_data = shared_ptr<unsigned char>(new unsigned char[m_size],
+            [](unsigned char* data)
+            {
+                delete[] data;
+            });
+            memcpy(m_data.get(), buff.m_data.get(), m_size);
+        }
+        Buffer(Buffer&& buff)
+        {
+            m_size = buff.m_size;
+            m_data = std::move(buff.m_data);
+            buff.m_data.reset();
+        }
+        Buffer& operator=(const Buffer& buff)
+        {
+            if (this == &buff)
+            {
+                return *this;
+            }
+
+            m_size = buff.m_size;
+
+            if (m_data.get() != nullptr)
+            {
+                m_data.reset();
+            }
+            else
+            {
+                m_data = shared_ptr<unsigned char>(new unsigned char[m_size],
+                [](unsigned char* data)
+                {
+                    delete[] data;
+                });
+            }
+            memcpy(m_data.get(), buff.m_data.get(), m_size);
+            return *this;
+        }
         ~Buffer();
         size_t
-        GetSize()
+        GetSize() const
         {
             return m_size;
         }
         unsigned char*
-        GetData()
+        GetData() const
         {
             return m_data.get();
         }
