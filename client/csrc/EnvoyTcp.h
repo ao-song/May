@@ -59,7 +59,7 @@ namespace May
         EnvoyTcp(
             string addr,
             int port,
-            EventHandlerTable* table);                  
+            EventHandlerTable* table);                          
         ~EnvoyTcp();        
 
         Action Register(Service* service);
@@ -97,6 +97,9 @@ namespace May
     private:
         void HandleReceivedData();
         Action Send(Buffer* buff);
+
+        EnvoyTcp(const EnvoyTcp& other);
+        EnvoyTcp& operator=(const EnvoyTcp& other);
 
     private:
         string m_addr_str;

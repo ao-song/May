@@ -72,6 +72,10 @@ namespace May
         virtual void HandleEvent(
             EventType events,
             int fd);
+
+    private:
+        TcpClient(const TcpClient& other);
+        TcpClient& operator=(const TcpClient& other);
         
     private:
         string m_srv_addr_str;

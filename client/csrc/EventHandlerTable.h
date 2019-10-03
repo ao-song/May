@@ -54,6 +54,10 @@ namespace May
         bool DeleteEvent(struct epoll_event* event);
 
         void HandleEvents();
+    
+    private:
+        EventHandlerTable(const EventHandlerTable& other);
+        EventHandlerTable& operator=(const EventHandlerTable& other);
 
     private:
         int m_epfd;

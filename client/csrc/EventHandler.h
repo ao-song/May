@@ -62,6 +62,9 @@ namespace May
         EventHandlerTable* GetTable();
 
     private:
+        EventHandler(const EventHandler& other);
+        EventHandler& operator=(const EventHandler& other);
+
         EventHandlerTable*  m_table;
     };
 
