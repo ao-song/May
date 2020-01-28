@@ -7,7 +7,7 @@ The Client and Server can be configured to talk in TLS.
 ![Here is how May looks like](https://github.com/ao-song/May/blob/master/img/may.png)
 
 How to compile:
-The server and the client erlang part code are organized with *rebar3*, client C++ part is with *cmake*. So you konw how to compile the codes.
+*rebar3* and *cmake* are used to compile.
 
 ## Server
 Server is implemented in erlang, accepts TCP connections for handling requests and send notifications.

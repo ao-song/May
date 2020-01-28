@@ -41,7 +41,7 @@ namespace May
 {
     class TcpClientOwner;
     
-    class TcpClient : public EventHandler
+    class TcpClient final : public EventHandler
     {
     public:
         typedef enum
