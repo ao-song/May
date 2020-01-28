@@ -52,7 +52,7 @@ namespace May
     }
     */
 
-    class EnvoyTcp: public Envoy, public TcpClientOwner
+    class EnvoyTcp final: public Envoy, public TcpClientOwner
     {
     public:
         EnvoyTcp(EventHandlerTable* table);
@@ -98,8 +98,8 @@ namespace May
         void HandleReceivedData();
         Action Send(Buffer* buff);
 
-        EnvoyTcp(const EnvoyTcp& other);
-        EnvoyTcp& operator=(const EnvoyTcp& other);
+        EnvoyTcp(const EnvoyTcp& other) = delete;
+        EnvoyTcp& operator=(const EnvoyTcp& other) = delete;
 
     private:
         string m_addr_str;

@@ -56,8 +56,8 @@ namespace May
         void HandleEvents();
     
     private:
-        EventHandlerTable(const EventHandlerTable& other);
-        EventHandlerTable& operator=(const EventHandlerTable& other);
+        EventHandlerTable(const EventHandlerTable& other) = delete;
+        EventHandlerTable& operator=(const EventHandlerTable& other) = delete;
 
     private:
         int m_epfd;

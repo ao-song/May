@@ -74,8 +74,8 @@ namespace May
             int fd);
 
     private:
-        TcpClient(const TcpClient& other);
-        TcpClient& operator=(const TcpClient& other);
+        TcpClient(const TcpClient& other) = delete;
+        TcpClient& operator=(const TcpClient& other) = delete;
         
     private:
         string m_srv_addr_str;
