@@ -38,24 +38,10 @@ namespace May
 
         Buffer(string& str);
 
-        Buffer(const Buffer& buff) = default;
-        Buffer& operator=(const Buffer& buff) = default;
-
-        Buffer(Buffer&& buff)
-        {
-            m_size = buff.m_size;
-            m_data = move(buff.m_data);
-        }
-
-        Buffer& operator=(const Buffer&& buff)
-        {
-            if (this == &buff)
-                return *this;
-            
-            m_size = buff.m_size;
-            m_data = move(buff.m_data);
-            return *this;
-        }
+        Buffer(const Buffer&) = default;
+        Buffer& operator=(const Buffer&) = default;
+        Buffer(Buffer&&) = default;
+        Buffer& operator=(Buffer&&) = default;
 
         ~Buffer();
 
