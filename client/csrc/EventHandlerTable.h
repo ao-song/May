@@ -21,8 +21,7 @@
 #include <sys/epoll.h>
 
 #define FD_NOT_SET    -1
-// any number bigger than 0 works, use epoll_create rather than epoll_create1
-// just because I don't like the name. ^_^
+// any number bigger than 0 works
 #define EPOLL_SIZE       5000
 #define MAX_EPOLL_EVENTS 5 // currently enough..
 #define EPOLL_TIMEOUT    0
